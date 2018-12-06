@@ -105,7 +105,7 @@ find_package(HIDAPI)
 set(LIBRARIES ${LIBRARIES} ${HIDAPI_LIBRARIES})
 
 target_link_libraries(${PROJECT_NAME}
-    PRIVATE ${LIBRARIES})
+    PUBLIC ${LIBRARIES})
 
 if (BUILD_XMREGCORE_TESTS)
     enable_testing()
