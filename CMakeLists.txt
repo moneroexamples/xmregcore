@@ -71,24 +71,7 @@ target_include_monero_directories(${PROJECT_NAME})
 
 set(LIBRARIES
         myxrmcore
-        cryptonote_core
-        blockchain_db
-        cryptonote_protocol
-        cryptonote_basic
-        daemonizer
-        cncrypto
-        blocks
-        lmdb
-        ringct
-        ringct_basic
-        common
-        mnemonics
-        epee
-        easylogging
-        device
-        epee
-        checkpoints
-        version
+        ${Monero_LIBRARIES}
         sodium
         ${Boost_LIBRARIES}
         pthread

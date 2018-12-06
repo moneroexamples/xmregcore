@@ -28,14 +28,35 @@
 # (c) 2014-2016 cpp-ethereum contributors.
 #------------------------------------------------------------------------------
 
-set(LIBS common;blocks;cryptonote_basic;cryptonote_core;
-		cryptonote_protocol;daemonizer;mnemonics;epee;lmdb;device;
-		blockchain_db;ringct;wallet;cncrypto;easylogging;version;checkpoints)
+#set(LIBS        common;blocks;cryptonote_basic;cryptonote_core;
+#		cryptonote_protocol;daemonizer;mnemonics;epee;lmdb;device;
+#                blockchain_db;ringct;wallet;cncrypto;easylogging;version;checkpoints;
+#                ringct_basic)
+
+set(LIBS  cryptonote_core
+          blockchain_db
+          cryptonote_protocol
+          cryptonote_basic
+          daemonizer
+          cncrypto
+          blocks
+          lmdb
+          ringct
+          ringct_basic
+          common
+          mnemonics
+          easylogging
+          device
+          epee
+          checkpoints
+          version)
 
 set(Xmr_INCLUDE_DIRS "${CPP_MONERO_DIR}")
 
 # if the project is a subset of main cpp-ethereum project
 # use same pattern for variables as Boost uses
+
+set(Monero_LIBRARIES "")
 
 foreach (l ${LIBS})
 
@@ -44,7 +65,13 @@ foreach (l ${LIBS})
 	find_library(Xmr_${L}_LIBRARY
 			NAMES ${l}
 			PATHS ${CMAKE_LIBRARY_PATH}
-			PATH_SUFFIXES "/src/${l}" "/src/" "/external/db_drivers/lib${l}" "/lib" "/src/crypto" "/contrib/epee/src" "/external/easylogging++/"
+                        PATH_SUFFIXES "/src/${l}"
+                                      "/src/"
+                                      "/external/db_drivers/lib${l}"
+                                      "/lib" "/src/crypto"
+                                      "/contrib/epee/src"
+                                      "/external/easylogging++/"
+                                      "/src/ringct/"
 			NO_DEFAULT_PATH
 			)
 
@@ -55,15 +82,22 @@ foreach (l ${LIBS})
 	add_library(${l} STATIC IMPORTED)
 	set_property(TARGET ${l} PROPERTY IMPORTED_LOCATION ${Xmr_${L}_LIBRARIES})
 
+        set(Monero_LIBRARIES ${Monero_LIBRARIES} ${l})
+
 endforeach()
 
 
-if (EXISTS ${MONERO_BUILD_DIR}/src/ringct/libringct_basic.a)
-	message(STATUS FindMonero " found libringct_basic.a")
-	add_library(ringct_basic STATIC IMPORTED)
-	set_property(TARGET ringct_basic
-			PROPERTY IMPORTED_LOCATION ${MONERO_BUILD_DIR}/src/ringct/libringct_basic.a)
-endif()
+
+#if (EXISTS ${MONERO_BUILD_DIR}/src/ringct/libringct_basic.a)
+#	message(STATUS FindMonero " found libringct_basic.a")
+#	add_library(ringct_basic STATIC IMPORTED)
+#	set_property(TARGET ringct_basic
+#			PROPERTY IMPORTED_LOCATION ${MONERO_BUILD_DIR}/src/ringct/libringct_basic.a)
+
+#        set(Monero_LIBRARIES ${Monero_LIBRARIES} ringct_basic)
+#endif()
+
+message("FOUND Monero_LIBRARIES: ${Monero_LIBRARIES}")
 
 message(STATUS ${MONERO_SOURCE_DIR}/build)
 
