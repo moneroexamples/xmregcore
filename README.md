@@ -1,6 +1,6 @@
-# Set of c++ code that is used commonly among moneroexamples repositories
+# Moneroexamples core repositories
 
-This repository include code that is oftenly used among moneroexamples projects.
+This repository includes code that is oftenly used among moneroexamples projects.
 It includes:
 
  - classess for decoding outputs/inputs, payment ids
@@ -27,7 +27,7 @@ sudo apt install git build-essential cmake libboost-all-dev miniupnpc libunbound
 # go to home folder
 cd ~
 
-git clone --recursive https://github.com/monero-project/monero
+git clone --recurse-submodules https://github.com/monero-project/monero
 
 cd monero/
 
@@ -42,7 +42,7 @@ USE_SINGLE_BUILDDIR=1 make
 # go to home folder if still in ~/monero
 cd ~
 
-git clone --recursive-submodule https://github.com/moneroexamples/xmregcore.git
+git clone --recurse-submodules  https://github.com/moneroexamples/xmregcore.git
 
 cd xmregcore
 
