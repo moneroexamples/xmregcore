@@ -76,8 +76,7 @@ set(LIBRARIES
         sodium
         pthread
         unbound
-        curl
-        cncrypto
+        curl        
         ssl
         crypto)
 

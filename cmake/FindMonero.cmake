@@ -38,7 +38,6 @@ set(LIBS  cryptonote_core
           cryptonote_protocol
           cryptonote_basic
           daemonizer
-          cncrypto
           blocks
           lmdb
           ringct
@@ -49,7 +48,8 @@ set(LIBS  cryptonote_core
           device
           epee
           checkpoints
-          version)
+          version
+          cncrypto)
 
 set(Xmr_INCLUDE_DIRS "${CPP_MONERO_DIR}")
 
