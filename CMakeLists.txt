@@ -72,8 +72,8 @@ target_include_monero_directories(${PROJECT_NAME})
 set(LIBRARIES
         myxrmcore
         ${Monero_LIBRARIES}
-        sodium
         ${Boost_LIBRARIES}
+        sodium
         pthread
         unbound
         curl
