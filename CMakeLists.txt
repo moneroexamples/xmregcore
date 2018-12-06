@@ -12,7 +12,7 @@ if (NOT MONERO_DIR)
     set(MONERO_DIR ~/monero)
 endif()
 
-#option(BUILD_TESTS "Build tests for the project" OFF)
+option(BUILD_XMREGCORE_TESTS "Build tests for the project" ON)
 
 message(STATUS MONERO_DIR ": ${MONERO_DIR}")
 
@@ -125,8 +125,9 @@ set(LIBRARIES ${LIBRARIES} ${HIDAPI_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}
     PRIVATE ${LIBRARIES})
 
-
-enable_testing()
-add_subdirectory(ext/googletest)
-add_subdirectory(tests)
+if (BUILD_XMREGCORE_TESTS)
+    enable_testing()
+    add_subdirectory(ext/googletest)
+    add_subdirectory(tests)
+endif()
 
