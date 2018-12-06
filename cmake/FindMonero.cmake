@@ -79,10 +79,10 @@ foreach (l ${LIBS})
 
 	message(STATUS FindMonero " Xmr_${L}_LIBRARIES ${Xmr_${L}_LIBRARY}")
 
-	add_library(${l} STATIC IMPORTED)
+        add_library(${l} STATIC IMPORTED GLOBAL)
 	set_property(TARGET ${l} PROPERTY IMPORTED_LOCATION ${Xmr_${L}_LIBRARIES})
 
-        set(Monero_LIBRARIES ${Monero_LIBRARIES} ${l})
+        set(Monero_LIBRARIES ${Monero_LIBRARIES} ${l} CACHE INTERNAL "Monero LIBRARIES")
 
 endforeach()
 
