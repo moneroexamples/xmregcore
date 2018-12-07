@@ -97,7 +97,8 @@ public:
         rct::key   rtc_mask;
         rct::key   rtc_amount;
 
-        friend std::ostream& operator<<(std::ostream& os, info const& _info);
+        friend std::ostream& operator<<(std::ostream& os,
+                                        info const& _info);
     };
 
 protected:
@@ -148,7 +149,8 @@ public:
         uint64_t amount;
         public_key out_pub_key;
 
-        friend std::ostream& operator<<(std::ostream& os, info const& _info);
+        friend std::ostream& operator<<(std::ostream& os,
+                                        info const& _info);
     };
 
 

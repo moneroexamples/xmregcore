@@ -8,7 +8,9 @@ set(SOURCE_FILES
         tools.h
         tools.cpp
         UniversalIdentifier.hpp
-        UniversalIdentifier.cpp)
+        UniversalIdentifier.cpp
+        Account.h
+        Account.cpp)
 
 # make static library called libmyxrm
 # that we are going to link to

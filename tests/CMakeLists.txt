@@ -19,5 +19,6 @@ endmacro()
 
 resource_dir("res")
 
-#add_om_test(microcore)
+
 add_om_test(universalidentifier)
+add_om_test(account)
