@@ -101,7 +101,7 @@ MicroCore::get_mempool() const
     return m_mempool;
 }
 
-virtual network_type
+network_type
 MicroCore::get_nettype() const
 {
     return nettype;
