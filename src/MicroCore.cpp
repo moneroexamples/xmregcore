@@ -101,6 +101,12 @@ MicroCore::get_mempool() const
     return m_mempool;
 }
 
+virtual network_type
+MicroCore::get_nettype() const
+{
+    return nettype;
+}
+
 bool
 MicroCore::get_block_from_height(uint64_t height, block& blk) const
 {
