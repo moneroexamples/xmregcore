@@ -67,6 +67,9 @@ public:
     virtual hw::device* const
     get_device() const;
 
+    virtual network_type
+    get_nettype() const;
+
     virtual void
     get_output_key(uint64_t amount,
                    vector<uint64_t> const& absolute_offsets,
