@@ -82,7 +82,6 @@ private:
     address_parse_info addr_info;
     boost::optional<secret_key> viewkey;
     boost::optional<secret_key> spendkey;
-
 };
 
 

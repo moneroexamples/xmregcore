@@ -48,6 +48,12 @@ public:
                                               address.address);
         }
 
+        inline account_keys
+        get_account_keys() const
+        {
+            return {address.address, spendkey, viewkey};
+        }
+
         friend std::ostream&
         operator<<(std::ostream& os, account const& _account);
     };
@@ -86,7 +92,7 @@ public:
     // that is normaly done using blockchain
     bool
     get_tx(crypto::hash const& tx_hash,
-           transaction& tx) const;
+           transaction& tx) const;        
 
 private:
     void init();

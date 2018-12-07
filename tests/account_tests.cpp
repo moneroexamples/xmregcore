@@ -103,5 +103,32 @@ TEST(ACCOUNT, FullConstructionSubAddress)
     EXPECT_TRUE(acc.ai().is_subaddress);
 }
 
+TEST(SUBADDRESS, BasicGenerationTest)
+{
+    auto jtx = construct_jsontx("d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c");
+
+    ASSERT_TRUE(jtx);
+
+    MicroCore mcore;
+
+    auto* const hw = mcore.get_device();
+
+    // generate first subaddress
+    uint32_t i {1};
+
+    subaddress_index index {0, i};
+
+    account_public_address subaddres
+            = hw->get_subaddress(jtx->sender.get_account_keys(),
+                                 index);
+
+    string subaddr_str = get_account_address_as_str(jtx->ntype,
+                                      !index.is_zero(), subaddres);
+
+    //cout << i << ": " <<  subaddr_str << '\n';
+
+    EXPECT_EQ(subaddr_str,
+              "77JBM7fQNgNKyqHN8dc7DN1mJ4CQZyHg5fXFUstQcHCYEp3rUXVGd8U8ezAdNPDwW7AxejmjQLhz9HjtuW4BwvCdBAcGxH5"s);
+}
 
 }
