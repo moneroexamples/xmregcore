@@ -83,6 +83,9 @@ public:
     inline auto is_subaddress() const
     {return address_type == SUBADDRRES;}
 
+    explicit operator bool() const
+    {return !is_none();}
+
     static inline string
     ai_to_str(address_parse_info const& addr_info,
               network_type net_type);

@@ -17,6 +17,7 @@ TEST(ACCOUNT, DefaultConstruction)
     Account acc;
 
     EXPECT_EQ(acc.type(), Account::ADDRESS_TYPE::NONE);
+    EXPECT_FALSE(acc);
 }
 
 TEST(ACCOUNT, FullConstruction)
@@ -38,6 +39,8 @@ TEST(ACCOUNT, FullConstruction)
     EXPECT_EQ(acc.sk2str(), sender["spendkey"]);
 
     EXPECT_FALSE(acc.ai().is_subaddress);
+
+    EXPECT_TRUE(acc);
 }
 
 TEST(ACCOUNT, FullConstructionFromStrings)
@@ -109,6 +112,7 @@ TEST(ACCOUNT, FullConstructionSubAddress)
     EXPECT_EQ(acc.type(), Account::ADDRESS_TYPE::SUBADDRRES);
 
     EXPECT_TRUE(acc.ai().is_subaddress);
+    EXPECT_TRUE(acc);
 }
 
 TEST(SUBADDRESS, BasicGenerationTest)
