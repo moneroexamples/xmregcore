@@ -14,6 +14,15 @@ using namespace cryptonote;
 using namespace crypto;
 using namespace std;
 
+class AbstractAccount
+{
+public:
+
+protected:
+
+};
+
+
 class Account
 {
 public:
@@ -69,7 +78,7 @@ public:
 
     static inline string
     ai_to_str(address_parse_info const& addr_info,
-                network_type net_type);
+              network_type net_type);
 
     static inline secret_key
     parse_secret_key(string const& sk);
@@ -77,11 +86,26 @@ public:
     friend std::ostream&
     operator<<(std::ostream& os, Account const& _acc);
 
-private:
+    virtual ~Account() = default;
+
+protected:
     network_type nettype {network_type::STAGENET};
     address_parse_info addr_info;
     boost::optional<secret_key> viewkey;
     boost::optional<secret_key> spendkey;
+};
+
+class PrimaryAccount : public Account
+{
+public:
+    using Account::Account;
+};
+
+
+class SubAccount : public Account
+{
+public:
+    using Account::Account;
 };
 
 
