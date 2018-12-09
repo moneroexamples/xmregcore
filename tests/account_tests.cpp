@@ -12,6 +12,12 @@ namespace
 
 using namespace xmreg;
 
+TEST(ACCOUNT, DefaultConstruction)
+{
+    Account acc;
+
+    EXPECT_EQ(acc.type(), Account::ADDRESS_TYPE::NONE);
+}
 
 TEST(ACCOUNT, FullConstruction)
 {
@@ -51,6 +57,7 @@ TEST(ACCOUNT, FullConstructionFromStrings)
     EXPECT_EQ(acc.ai().address, jtx->sender.address.address);
     EXPECT_EQ(acc.vk(), jtx->sender.viewkey);
     EXPECT_EQ(acc.sk(), jtx->sender.spendkey);
+    EXPECT_EQ(acc.type(), Account::ADDRESS_TYPE::PRIMARY);
 }
 
 TEST(ACCOUNT, NoSpendandViewKeiesConstruction)
@@ -99,6 +106,7 @@ TEST(ACCOUNT, FullConstructionSubAddress)
     EXPECT_EQ(acc.ai2str(), jrecipient["address"]);
     EXPECT_EQ(acc.vk2str(), jrecipient["viewkey"]);
     EXPECT_EQ(acc.sk2str(), jrecipient["spendkey"]);
+    EXPECT_EQ(acc.type(), Account::ADDRESS_TYPE::SUBADDRRES);
 
     EXPECT_TRUE(acc.ai().is_subaddress);
 }

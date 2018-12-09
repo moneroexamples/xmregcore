@@ -12,7 +12,9 @@ Account::Account(
       addr_info {_addr_info},
       viewkey {_viewkey},
       spendkey {_spendkey}
-{}
+{
+    set_address_type();
+}
 
 Account::Account(
         network_type _nettype,
@@ -44,6 +46,8 @@ Account::Account(network_type _nettype,
 
     if (!_spendkey.empty())
         spendkey = parse_secret_key(_spendkey);
+
+    set_address_type();
 }
 
 

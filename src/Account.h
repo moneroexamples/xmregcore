@@ -14,18 +14,13 @@ using namespace cryptonote;
 using namespace crypto;
 using namespace std;
 
-class AbstractAccount
-{
-public:
-
-protected:
-
-};
-
-
 class Account
 {
 public:
+
+    enum ADDRESS_TYPE {NONE, PRIMARY, SUBADDRRES};
+
+    Account() = default;
 
     Account(network_type _nettype,
             address_parse_info const& _addr_info,
@@ -54,6 +49,9 @@ public:
             string const& _addr_info)
         : Account(_nettype, _addr_info, ""s, ""s)
     {}
+
+    inline auto type() const
+    {return address_type;}
 
     inline auto const& ai() const
     {return addr_info;}
@@ -89,23 +87,19 @@ public:
     virtual ~Account() = default;
 
 protected:
+    ADDRESS_TYPE address_type {NONE};
     network_type nettype {network_type::STAGENET};
     address_parse_info addr_info;
     boost::optional<secret_key> viewkey;
     boost::optional<secret_key> spendkey;
-};
 
-class PrimaryAccount : public Account
-{
-public:
-    using Account::Account;
-};
+    inline void
+    set_address_type()
+    {
+        address_type = addr_info.is_subaddress
+                ? SUBADDRRES : PRIMARY;
+    }
 
-
-class SubAccount : public Account
-{
-public:
-    using Account::Account;
 };
 
 
