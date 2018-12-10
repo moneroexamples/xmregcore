@@ -165,4 +165,59 @@ hex_to_tx(string const& tx_hex,
     return parse_and_validate_tx_from_blob(tx_blob, tx, tx_hash, tx_prefix_hash);
 }
 
+
+pair<network_type, address_type>
+nettype_based_on_address(string const& address)
+{
+
+    network_type determined_network_type {network_type::UNDEFINED};
+    address_type determined_address_type {address_type::UNDEFINED};
+
+    for_each_network_type([&address,
+                          &determined_network_type,
+                          &determined_address_type]
+                          (network_type nt)
+    {
+
+       uint64_t address_prefix = get_config(nt)
+               .CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX;
+       uint64_t integrated_address_prefix = get_config(nt)
+               .CRYPTONOTE_PUBLIC_INTEGRATED_ADDRESS_BASE58_PREFIX;
+       uint64_t subaddress_prefix = get_config(nt)
+               .CRYPTONOTE_PUBLIC_SUBADDRESS_BASE58_PREFIX;
+
+       blobdata data;
+       uint64_t prefix;
+
+       if (!tools::base58::decode_addr(address, prefix, data))
+       {
+         cerr << "Invalid address format\n";
+         return;
+       }
+
+       if (address_prefix == prefix)
+       {
+           determined_address_type = address_type::REGULAR;
+           determined_network_type = nt;
+           return;
+
+       }
+       else if (integrated_address_prefix == prefix)
+       {
+           determined_address_type = address_type::INTEGRATED;
+           determined_network_type = nt;
+           return;
+       }
+       else if (subaddress_prefix == prefix)
+       {
+           determined_address_type = address_type::SUBADDRESS;
+           determined_network_type = nt;
+           return;
+       }
+
+    });
+
+    return {determined_network_type, determined_address_type};
+}
+
 }

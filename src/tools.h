@@ -28,6 +28,15 @@ using namespace std;
 using  epee::string_tools::pod_to_hex;
 using  epee::string_tools::hex_to_pod;
 
+constexpr network_type network_types[]
+            = {network_type::MAINNET,
+               network_type::TESTNET,
+               network_type::STAGENET};
+
+enum class address_type : uint8_t
+{
+    REGULAR = 0, INTEGRATED, SUBADDRESS, UNDEFINED = 255
+};
 
 string
 get_default_lmdb_folder(network_type nettype = network_type::MAINNET);
@@ -56,5 +65,17 @@ addr_and_viewkey_from_string(string const& addres_str,
 bool
 hex_to_tx(string const& tx_hex, transaction& tx,
           crypto::hash& tx_hash,  crypto::hash& tx_prefix_hash);
+
+template <typename F>
+//requires F to be callable
+void
+for_each_network_type(F f)
+{
+    for (const auto& nt: network_types)
+        f(nt);
+}
+
+pair<network_type, address_type>
+nettype_based_on_address(string const& address);
 
 }

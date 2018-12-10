@@ -1,6 +1,7 @@
 #pragma once
 
 #include "monero_headers.h"
+#include "tools.h"
 
 #include <boost/optional.hpp>
 
@@ -50,8 +51,7 @@ public:
         : Account(_nettype, _addr_info, ""s, ""s)
     {}
 
-    inline auto type() const
-    {return address_type;}
+    virtual ADDRESS_TYPE type() const = 0;
 
     inline auto const& ai() const
     {return addr_info;}
@@ -74,17 +74,8 @@ public:
     inline auto nt() const
     {return nettype;}
 
-    inline auto is_none() const
-    {return address_type == NONE;}
-
-    inline auto is_primary() const
-    {return address_type == PRIMARY;}
-
-    inline auto is_subaddress() const
-    {return address_type == SUBADDRRES;}
-
     explicit operator bool() const
-    {return !is_none();}
+    {return type() != NONE;}
 
     static inline string
     ai_to_str(address_parse_info const& addr_info,
@@ -99,21 +90,87 @@ public:
     virtual ~Account() = default;
 
 protected:
-    ADDRESS_TYPE address_type {NONE};
+
     network_type nettype {network_type::STAGENET};
     address_parse_info addr_info;
     boost::optional<secret_key> viewkey;
     boost::optional<secret_key> spendkey;
-
-    inline void
-    set_address_type()
-    {
-        address_type = addr_info.is_subaddress
-                ? SUBADDRRES : PRIMARY;
-    }
-
 };
 
+
+// for now subclassess of the Account don't do much.
+// but with time it is expected to change and
+// and new functionality dependent on whether
+// we have primary or subaddress to be added
+// to the respective subclasses.
+
+class EmptyAccount : public Account
+{
+public:
+    using Account::Account;
+
+    virtual ADDRESS_TYPE type() const override
+    {return NONE;}
+};
+
+class PrimaryAccount : public Account
+{
+public:
+    using Account::Account;
+
+    virtual ADDRESS_TYPE type() const override
+    {return PRIMARY;}
+};
+
+class SubaddressAccount : public Account
+{
+public:
+    using Account::Account;
+
+    virtual inline ADDRESS_TYPE type() const override
+    {return SUBADDRRES;}
+};
+
+
+
+static unique_ptr<Account>
+account_factory()
+{
+    return make_unique<EmptyAccount>();
+}
+
+template <typename... T>
+static unique_ptr<Account>
+account_factory(string const& addr_str,
+                T&&... args)
+{
+    auto&& net_and_addr_type = nettype_based_on_address(addr_str);
+
+    if (net_and_addr_type.second == address_type::SUBADDRESS)
+        return make_unique<SubaddressAccount>(net_and_addr_type.first,
+                                           addr_str,
+                                           std::forward<T>(args)...);
+    else if (net_and_addr_type.second == address_type::REGULAR
+              || net_and_addr_type.second == address_type::INTEGRATED)
+        return make_unique<PrimaryAccount>(net_and_addr_type.first,
+                                           addr_str,
+                                           std::forward<T>(args)...);
+    return nullptr;
+}
+
+template <typename... T>
+static unique_ptr<Account>
+account_factory(network_type net_type,
+                address_parse_info const& addr_info,
+                T&&... args)
+{
+    if (addr_info.is_subaddress)
+        return make_unique<SubaddressAccount>(net_type, addr_info,
+                                              std::forward<T>(args)...);
+    else
+        return make_unique<PrimaryAccount>(net_type, addr_info,
+                                          std::forward<T>(args)...);
+}
 
 inline secret_key
 Account::parse_secret_key(string const& sk)
@@ -129,7 +186,7 @@ Account::parse_secret_key(string const& sk)
 
 inline string
 Account::ai_to_str(address_parse_info const& addr_info,
-                     network_type net_type)
+                   network_type net_type)
 {
     return get_account_address_as_str(
                 net_type,
