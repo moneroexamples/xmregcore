@@ -164,6 +164,10 @@ account_factory(network_type net_type,
                 address_parse_info const& addr_info,
                 T&&... args)
 {
+    if (!crypto::check_key(addr_info.address.m_view_public_key)
+            || !crypto::check_key(addr_info.address.m_spend_public_key))
+    return nullptr;
+
     if (addr_info.is_subaddress)
         return make_unique<SubaddressAccount>(net_type, addr_info,
                                               std::forward<T>(args)...);

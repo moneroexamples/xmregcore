@@ -114,6 +114,41 @@ TEST(ACCOUNT, FullConstructionSubAddress)
     EXPECT_TRUE(acc);
 }
 
+TEST(ACCOUNT, FailedConstructionFromString)
+{
+    string const wrong_address = "fgdgsfdfgs";
+    string const wrong_viewkey = "fgdgsfdfgs";
+    string const wrong_spendkey = "fgdgsfdfgs";
+
+    auto acc = account_factory(wrong_address, wrong_viewkey, wrong_spendkey);
+
+    EXPECT_EQ(acc, nullptr);
+}
+
+TEST(ACCOUNT, FailedConstructionFromNonString)
+{
+    auto jtx = construct_jsontx("d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c");
+
+    ASSERT_TRUE(jtx);
+
+    auto const& sender = jtx->jtx["sender"];
+
+    address_parse_info wrong_address {};
+
+    // just randmoly generate the two keys.
+    // so there are invalid, unless we assume
+    // that by chance we can generate a pair of correct keys.
+    crypto::rand(64, reinterpret_cast<uint8_t*>(
+                     &wrong_address.address.m_view_public_key));
+
+    crypto::rand(64, reinterpret_cast<uint8_t*>(
+                     &wrong_address.address.m_spend_public_key));
+
+    auto acc = account_factory(network_type::STAGENET, wrong_address);
+
+    EXPECT_EQ(acc, nullptr);
+}
+
 TEST(SUBADDRESS, BasicGenerationTest)
 {
     auto jtx = construct_jsontx("d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c");
