@@ -131,7 +131,8 @@ public:
     {return SUBADDRRES;}
 };
 
-
+// account_factory functions are helper functions
+// to easly create Account objects through uniqute_ptr
 
 static unique_ptr<Account>
 account_factory()
