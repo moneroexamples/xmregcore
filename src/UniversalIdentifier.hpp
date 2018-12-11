@@ -306,7 +306,7 @@ public:
 
      // overload to get value from tuple by type
     template <typename U>
-    auto* const get()
+    auto* const get() const
     {
         return std::get<unique_ptr<U>>(identifiers).get();
     }
@@ -314,7 +314,7 @@ public:
 
     // overload to get value from tuple by number
     template <size_t No>
-    auto* const get()
+    auto* const get() const
     {
         return std::get<No>(identifiers).get();
     }
