@@ -115,6 +115,9 @@ TEST(MODULAR_IDENTIFIER, LegacyPaymentID)
 
    EXPECT_TRUE(identifier.get<0>()->get()
                 == jtx->payment_id);
+
+   EXPECT_TRUE(identifier.get<0>()->raw()
+                == jtx->payment_id);
 }
 
 TEST(MODULAR_IDENTIFIER, IntegratedPaymentID)
@@ -132,6 +135,9 @@ TEST(MODULAR_IDENTIFIER, IntegratedPaymentID)
 
    EXPECT_TRUE(identifier.get<0>()->get()
                 == jtx->payment_id8e);
+
+   EXPECT_TRUE(identifier.get<0>()->raw()
+                == jtx->payment_id8);
 }
 
 

@@ -199,6 +199,8 @@ class PaymentID : public BaseIdentifier
 
 public:
 
+    using payments_t = tuple<crypto::hash, crypto::hash8>;
+
     PaymentID(address_parse_info const* _address,
               secret_key const* _viewkey)
         : BaseIdentifier(_address, _viewkey)
@@ -209,17 +211,14 @@ public:
                   vector<public_key> const& additional_tx_pub_keys
                         = vector<public_key>{}) override
     {   
-        cout << "PaymentID decryption: "
-                + pod_to_hex(payment_id) << endl;
-
         // get payment id. by default we are intrested
         // in short ids from integrated addresses
-        auto payment_id_tuple = get_payment_id(tx);
+        payment_id_tuple = get_payment_id(tx);
 
         payment_id = std::get<HashT>(payment_id_tuple);
 
         // if no payment_id found, return
-        if (payment_id == null_hash)
+        if (payment_id == null_hash || get_viewkey() == nullptr)
             return;
 
         // decrypt integrated payment id. if its legacy payment id
@@ -231,7 +230,7 @@ public:
         }                
     }
 
-    tuple<crypto::hash, crypto::hash8>
+    payments_t
     get_payment_id(transaction const& tx) const;
 
     inline bool
@@ -254,14 +253,21 @@ public:
 
     bool
     encrypt_payment_id(crypto::hash8& payment_id,
-                       const crypto::public_key& public_key,
-                       const crypto::secret_key& secret_key) const;
+                       crypto::public_key const& public_key,
+                       crypto::secret_key const& secret_key) const;
 
     inline auto get() const {return payment_id;}
+
+    // for legacy payment id this will be same as get()
+    // for integrated id, this will be encrypted version of the id
+    // while the get() will return decrypted short payment id
+    inline HashT raw() const
+    {return std::get<HashT>(payment_id_tuple);}
 
 private:
     HashT payment_id {};
     HashT null_hash {};
+    payments_t payment_id_tuple;
 };
 
 using LegacyPaymentID = PaymentID<crypto::hash>;
