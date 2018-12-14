@@ -19,7 +19,7 @@ class Account
 {
 public:
 
-    enum ADDRESS_TYPE {NONE, PRIMARY, SUBADDRRES};
+    enum ADDRESS_TYPE {NONE, PRIMARY, SUBADDRESS};
 
     Account() = default;
 
@@ -52,6 +52,9 @@ public:
     {}
 
     virtual ADDRESS_TYPE type() const = 0;
+
+    inline bool is_subaddress() const
+    {return type() == SUBADDRESS;}
 
     inline auto const& ai() const
     {return addr_info;}
@@ -128,7 +131,7 @@ public:
     using Account::Account;
 
     virtual inline ADDRESS_TYPE type() const override
-    {return SUBADDRRES;}
+    {return SUBADDRESS;}
 };
 
 // account_factory functions are helper functions

@@ -536,7 +536,7 @@ PaymentID<crypto::hash>::encrypt_payment_id(
         crypto::secret_key const& secret_key) const;
 
 template <typename HashT>
-tuple<crypto::hash, crypto::hash8>
+typename PaymentID<HashT>::payments_t
 PaymentID<HashT>::get_payment_id(
         transaction const& tx) const
 {
