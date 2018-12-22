@@ -489,7 +489,7 @@ GuessInput::identify(transaction const& tx,
     // copy local_identified_inputs into identified_inputs
     // so that we can return them to the end user
 
-    identified_inputs = local_identified_inputs;
+    identified_inputs = std::move(local_identified_inputs);
 }
 
 
