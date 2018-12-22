@@ -28,6 +28,13 @@ public:
         public_key pub_key;
         uint64_t amount {0};
     };
+    
+    struct input 
+    {
+        key_image key_img;
+        uint64_t amount;
+        public_key out_pub_key;
+    };
 
     struct account
     {
@@ -39,6 +46,7 @@ public:
         uint64_t amount {0};
         uint64_t change {0};
         vector<output> outputs;
+        vector<input> inputs;
 
         inline string
         address_str() const
@@ -106,6 +114,7 @@ private:
     void init();
     bool read_config();
     void populate_outputs(json const& joutputs, vector<output>& outs);
+    void populate_inputs(json const& jinputs, vector<input>& ins);
 
 };
 

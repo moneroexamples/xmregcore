@@ -140,6 +140,8 @@ JsonTx::init()
         sender.ntype = ntype;
 
         populate_outputs(jtx["sender"]["outputs"], sender.outputs);
+        
+        populate_inputs(jtx["sender"]["inputs"], sender.inputs);
     }
 
 
@@ -161,6 +163,9 @@ JsonTx::init()
         recipients.back().ntype = ntype;
 
         populate_outputs(jrecpient["outputs"], recipients.back().outputs);
+
+        // recipients dont have inputs so we do not populate
+        // them here.
     }
 
     if (!hex_to_tx(jtx["tx_hex"], tx, tx_hash, tx_prefix_hash))
@@ -234,6 +239,31 @@ JsonTx::populate_outputs(json const& joutputs, vector<output>& outs)
         output out {jout[0], out_pk, jout[2]};
 
         outs.push_back(out);
+    }
+}
+
+void
+JsonTx::populate_inputs(json const& jinputs, vector<input>& ins)
+{
+    for (auto const& jin: jinputs)
+    {
+        public_key out_pk;
+
+        if (!hex_to_pod(jin[1], out_pk))
+        {
+            throw std::runtime_error("hex_to_pod(jout[1], out_pk)");
+        }
+        
+        key_image key_img;
+
+        if (!hex_to_pod(jin[0], key_img))
+        {
+            throw std::runtime_error("hex_to_pod(jout[1], out_pk)");
+        }
+
+        input in {key_img, jin[2], out_pk};
+
+        ins.push_back(in);
     }
 }
 
