@@ -25,6 +25,8 @@ namespace
 using namespace xmreg;
 
 
+// equality operators for outputs
+
 inline bool
 operator==(const Output::info& lhs, const JsonTx::output& rhs)
 {
@@ -53,6 +55,40 @@ operator==(const vector<Output::info>& lhs, const vector<JsonTx::output>& rhs)
 
     return true;
 }
+
+
+
+// equality operators for inputs
+
+inline bool
+operator==(const Input::info& lhs, const JsonTx::input& rhs)
+{
+    return lhs.amount == rhs.amount
+            && lhs.out_pub_key == rhs.out_pub_key
+            && lhs.key_img == rhs.key_img;
+}
+
+inline bool
+operator!=(const Input::info& lhs, const JsonTx::input& rhs)
+{
+    return !(lhs == rhs);
+}
+
+inline bool
+operator==(const vector<Input::info>& lhs, const vector<JsonTx::input>& rhs)
+{
+    if (lhs.size() != rhs.size())
+        return false;
+
+    for (size_t i = 0; i < lhs.size(); i++)
+    {
+        if (lhs[i] != rhs[i])
+            return false;
+    }
+
+    return true;
+}
+
 
 TEST(MODULAR_IDENTIFIER, OutputsRingCT)
 {
@@ -175,7 +211,8 @@ TEST(MODULAR_IDENTIFIER, GuessInputRingCT)
 //   for (auto const& input_info: identifier.get<0>()->get())
 //       cout << input_info << endl;
 
-   EXPECT_TRUE(identifier.get<0>()->get().size() == 2);
+   EXPECT_TRUE(identifier.get<0>()->get()
+                == jtx->sender.inputs);
 }
 
 TEST(MODULAR_IDENTIFIER, RealInputRingCT)
@@ -200,7 +237,8 @@ TEST(MODULAR_IDENTIFIER, RealInputRingCT)
 //   for (auto const& input_info: identifier.get<0>()->get())
 //       cout << input_info << endl;
 
-   EXPECT_TRUE(identifier.get<0>()->get().size() == 2);
+   EXPECT_TRUE(identifier.get<0>()->get()
+                == jtx->sender.inputs);
 }
 
 }

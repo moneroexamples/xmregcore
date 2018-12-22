@@ -126,7 +126,7 @@ JsonTx::init()
     if (jtx.count("sender"))
     {
         addr_and_viewkey_from_string(
-                 jtx["sender"]["address"], jtx["sender"]["viewkey"],                                \
+                 jtx["sender"]["address"], jtx["sender"]["viewkey"],          
                  ntype, sender.address, sender.viewkey);
 
         parse_str_secret_key(jtx["sender"]["spendkey"], sender.spendkey);
@@ -150,7 +150,7 @@ JsonTx::init()
         recipients.push_back(account{});
 
         addr_and_viewkey_from_string(
-                 jrecpient["address"], jrecpient["viewkey"],                                \
+                 jrecpient["address"], jrecpient["viewkey"],              
                  ntype, recipients.back().address,
                  recipients.back().viewkey);
 
@@ -194,7 +194,8 @@ JsonTx::read_config()
     }
     catch (std::exception const& e)
     {
-        cerr << "Cant parse json string as json: " << e.what() << endl;
+        cerr << "Cant parse json string as json: " 
+            << e.what() << endl;
         return false;
     }
 
