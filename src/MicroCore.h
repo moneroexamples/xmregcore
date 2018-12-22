@@ -73,7 +73,7 @@ public:
     virtual void
     get_output_key(uint64_t amount,
                    vector<uint64_t> const& absolute_offsets,
-                   vector<cryptonote::output_data_t>& outputs)
+                   vector<cryptonote::output_data_t>& outputs) const
     {
         core_storage.get_db()
                 .get_output_key(epee::span<const uint64_t>(&amount, 1),
@@ -82,7 +82,7 @@ public:
 
     virtual output_data_t
     get_output_key(uint64_t amount,
-                   uint64_t global_amount_index)
+                   uint64_t global_amount_index) const
     {
         return core_storage.get_db()
                     .get_output_key(amount, global_amount_index);

@@ -385,6 +385,113 @@ Input::generate_key_image(const crypto::key_derivation& derivation,
     return true;
 }
 
+void
+GuessInput::identify(transaction const& tx,
+                     public_key const& tx_pub_key,
+                     vector<public_key> const& additional_tx_pub_keys)
+{
+    // to implement this method, we are just going
+    // to generate known_outputs_t = unordered_map<public_key, uint64_t>;
+    // based on ring members in each key image, and then
+    // we will call identify method of the Input base class.
+
+    // this will store guessed inputs
+    vector<info> local_identified_inputs;
+
+    auto input_no = tx.vin.size();
+
+    for (auto i = 0u; i < input_no; ++i)
+    {
+        if(tx.vin[i].type() != typeid(txin_to_key))
+            continue;
+
+        // get tx input key
+        txin_to_key const& in_key
+                = boost::get<cryptonote::txin_to_key>(tx.vin[i]);
+
+        // get absolute offsets of mixins
+        auto absolute_offsets
+                = relative_output_offsets_to_absolute(
+                        in_key.key_offsets);
+
+        //tx_out_index is pair::<transaction hash, output index>
+        vector<tx_out_index> indices;
+
+        // get tx hashes and indices in the txs for the
+        // given outputs of mixins
+        //  this cant THROW DB_EXCEPTION
+        mcore->get_output_tx_and_index(
+                    in_key.amount, absolute_offsets, indices);
+
+        // will keep output public key and amount
+        // of mixins in the given key image which
+        // are ours.
+        known_outputs_t known_outputs_map;
+
+        // for each found mixin tx, check if any key image
+        // generated using our outputs in the mixin tx
+        // matches the given key image in the current tx
+        for (auto const& txi : indices)
+        {
+           auto const& mixin_tx_hash = txi.first;
+           auto const& output_index_in_tx = txi.second;
+
+           transaction mixin_tx;
+
+           if (!mcore->get_tx(mixin_tx_hash, mixin_tx))
+           {
+               throw std::runtime_error("Cant get tx: "
+                                        + pod_to_hex(mixin_tx_hash));
+           }
+
+           // use Output universal identifier to identify our outputs
+           // in a mixin tx
+           auto identifier = make_identifier(
+                       mixin_tx,
+                       make_unique<Output>(get_address(), get_viewkey()));
+
+           identifier.identify();
+
+           for (auto const& found_output: identifier.get<Output>()->get())
+           {
+               // add found output into the map of known ouputs
+               known_outputs_map.insert(
+                    {found_output.pub_key, found_output.amount});
+           }
+
+        } // for (auto const& txi : indices)
+
+        // so hopefully we found some of the mixins that are
+        // ours. So now, lets try use that information to
+        // guess which of them was used in the current
+        // key image.
+
+        // to do this, set known_outputs to the known_outputs_map
+        known_outputs = &known_outputs_map;
+
+        // and now execute baseclasses (i.e. Input) identify
+        // method. The method will use known_outputs as
+        // its list of outputs
+        Input::identify(tx, tx_pub_key, additional_tx_pub_keys);
+
+        // copy what was identified using Input::identify
+        // into local_identified_inputs
+        local_identified_inputs.insert(local_identified_inputs.end(),
+                                       identified_inputs.begin(),
+                                       identified_inputs.end());
+
+        identified_inputs.clear();
+
+    } // for (auto i = 0u; i < input_no; ++i)
+
+
+    // once all key images have been scanned,
+    // copy local_identified_inputs into identified_inputs
+    // so that we can return them to the end user
+
+    identified_inputs = local_identified_inputs;
+}
+
 
 void RealInput::identify(transaction const& tx,
                          public_key const& tx_pub_key,

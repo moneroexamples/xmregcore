@@ -163,6 +163,29 @@ protected:
 };
 
 /**
+ * Uses only viewkey to "guess" possible
+ * inputs. These are only guessess, because
+ * without spendkey it is not possible to know
+ * for sure which key images were generated from
+ * which outputs.
+ */
+class GuessInput : public Input
+{
+public:
+    GuessInput(address_parse_info const* _a,
+               secret_key const* _viewkey,
+               MicroCore* _mcore)
+        : Input(_a, _viewkey, nullptr, _mcore)
+    {}
+
+    void identify(transaction const& tx,
+                  public_key const& tx_pub_key,
+                  vector<public_key> const& additional_tx_pub_keys
+                        = vector<public_key>{}) override;
+
+};
+
+/**
  * Spendkey is optional. But if we have it,
  * we can for sure determine which key images
  * are ours or not. This is especially useful

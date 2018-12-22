@@ -28,7 +28,7 @@ JsonTx::get_output_tx_and_index(
     for (auto const& jinput: jtx["inputs"])
     {
         if (jinput["amount"] != amount
-                && jinput["absolute_offsets"] != offsets)
+                || jinput["absolute_offsets"] != offsets)
             continue;
 
         for (auto const& jring_member: jinput["ring_members"])
@@ -74,25 +74,74 @@ JsonTx::get_tx(crypto::hash const& tx_hash,
 }
 
 void
+JsonTx::get_output_key(
+           uint64_t amount,
+           vector<uint64_t> const& absolute_offsets,
+           vector<output_data_t>& outputs)
+{
+    for (auto const& jinput: jtx["inputs"])
+    {
+        if (jinput["amount"] != amount
+                || jinput["absolute_offsets"] != absolute_offsets)
+            continue;
+
+        for (auto const& jring_member: jinput["ring_members"])
+        {
+
+            crypto::public_key out_pk;
+
+            if (!hex_to_pod(jring_member["ouput_pk"], out_pk))
+                throw std::runtime_error(
+                        "hex_to_pod(jring_member[\"ouput_pk\"], out_pk)");
+
+
+            rct::key commitment;
+
+            if (!hex_to_pod(jring_member["commitment"], commitment))
+                throw std::runtime_error(
+                        "hex_to_pod(jring_member[\"commitment\"], commitment)");
+
+
+            outputs.push_back(output_data_t {
+                                  out_pk,
+                                  jring_member["unlock_time"],
+                                  jring_member["height"],
+                                  commitment                              });
+        }
+    }
+}
+
+void
 JsonTx::init()
 {
     ntype = cryptonote::network_type {jtx["nettype"]};
 
-    hex_to_pod(jtx["payment_id"], payment_id);
-    hex_to_pod(jtx["payment_id8"], payment_id8);
-    hex_to_pod(jtx["payment_id8e"], payment_id8e);
+    if (jtx.count("payment_id"))
+    {
+        hex_to_pod(jtx["payment_id"], payment_id);
+        hex_to_pod(jtx["payment_id8"], payment_id8);
+        hex_to_pod(jtx["payment_id8e"], payment_id8e);
+    }
 
-    addr_and_viewkey_from_string(
-             jtx["sender"]["address"], jtx["sender"]["viewkey"],                                \
-             ntype, sender.address, sender.viewkey);
+    if (jtx.count("sender"))
+    {
+        addr_and_viewkey_from_string(
+                 jtx["sender"]["address"], jtx["sender"]["viewkey"],                                \
+                 ntype, sender.address, sender.viewkey);
 
-    parse_str_secret_key(jtx["sender"]["spendkey"], sender.spendkey);
+        parse_str_secret_key(jtx["sender"]["spendkey"], sender.spendkey);
 
-    sender.amount = jtx["sender"]["amount"];
-    sender.change = jtx["sender"]["change"];
-    sender.ntype = ntype;
+        // actuall amount spent accounting fee
+        sender.amount = jtx["sender"]["total_recieved"].get<uint64_t>()
+                - jtx["sender"]["total_spent"].get<uint64_t>()
+                + jtx["fee"].get<uint64_t>();
 
-    populate_outputs(jtx["sender"]["outputs"], sender.outputs);
+        sender.change = jtx["sender"]["total_recieved"];
+        sender.ntype = ntype;
+
+        populate_outputs(jtx["sender"]["outputs"], sender.outputs);
+    }
+
 
     for (auto const& jrecpient: jtx["recipient"])
     {
@@ -106,7 +155,7 @@ JsonTx::init()
         parse_str_secret_key(jrecpient["spendkey"],
                 recipients.back().spendkey);
 
-        recipients.back().amount = jrecpient["amount"];
+        recipients.back().amount = jrecpient["total_recieved"];
 
         recipients.back().is_subaddress = jrecpient["is_subaddress"];
         recipients.back().ntype = ntype;
@@ -114,9 +163,10 @@ JsonTx::init()
         populate_outputs(jrecpient["outputs"], recipients.back().outputs);
     }
 
-    if (!hex_to_tx(jtx["hex"], tx, tx_hash, tx_prefix_hash))
+    if (!hex_to_tx(jtx["tx_hex"], tx, tx_hash, tx_prefix_hash))
     {
-        throw std::runtime_error("hex_to_tx(jtx[\"hex\"], tx, tx_hash, tx_prefix_hash)");
+        throw std::runtime_error("hex_to_tx(jtx[\"hex\"], "
+                                 "tx, tx_hash, tx_prefix_hash)");
     }
 
 }

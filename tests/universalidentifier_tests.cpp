@@ -5,6 +5,19 @@
 
 #include "mocks.h"
 
+#define ADD_MOCKS(mcore) \
+    EXPECT_CALL(mcore, get_output_tx_and_index(_, _, _)) \
+            .WillRepeatedly( \
+                Invoke(&*jtx, &JsonTx::get_output_tx_and_index)); \
+        \
+    EXPECT_CALL(mcore, get_tx(_, _)) \
+            .WillRepeatedly( \
+                Invoke(&*jtx, &JsonTx::get_tx)); \
+        \
+    EXPECT_CALL(mcore, get_output_key(_, _, _)) \
+            .WillRepeatedly( \
+                Invoke(&*jtx, &JsonTx::get_output_key));
+
 
 namespace
 {
@@ -141,6 +154,30 @@ TEST(MODULAR_IDENTIFIER, IntegratedPaymentID)
 }
 
 
+TEST(MODULAR_IDENTIFIER, GuessInputRingCT)
+{
+    auto jtx = construct_jsontx("d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c");
+
+    ASSERT_TRUE(jtx);
+
+    MockMicroCore mcore;
+
+    ADD_MOCKS(mcore);
+
+    auto identifier = make_identifier(jtx->tx,
+          make_unique<GuessInput>(
+                    &jtx->sender.address,
+                    &jtx->sender.viewkey,
+                    &mcore));
+
+   identifier.identify();
+
+//   for (auto const& input_info: identifier.get<0>()->get())
+//       cout << input_info << endl;
+
+   EXPECT_TRUE(identifier.get<0>()->get().size() == 2);
+}
+
 TEST(MODULAR_IDENTIFIER, RealInputRingCT)
 {
     auto jtx = construct_jsontx("d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c");
@@ -149,13 +186,7 @@ TEST(MODULAR_IDENTIFIER, RealInputRingCT)
 
     MockMicroCore mcore;
 
-    EXPECT_CALL(mcore, get_output_tx_and_index(_, _, _))
-            .WillRepeatedly(
-                Invoke(&*jtx, &JsonTx::get_output_tx_and_index));
-
-    EXPECT_CALL(mcore, get_tx(_, _))
-            .WillRepeatedly(
-                Invoke(&*jtx, &JsonTx::get_tx));
+    ADD_MOCKS(mcore);
 
     auto identifier = make_identifier(jtx->tx,
           make_unique<RealInput>(
@@ -166,8 +197,8 @@ TEST(MODULAR_IDENTIFIER, RealInputRingCT)
 
    identifier.identify();
 
-   for (auto const& input_info: identifier.get<0>()->get())
-       cout << input_info << endl;
+//   for (auto const& input_info: identifier.get<0>()->get())
+//       cout << input_info << endl;
 
    EXPECT_TRUE(identifier.get<0>()->get().size() == 2);
 }
