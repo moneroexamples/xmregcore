@@ -89,10 +89,27 @@ operator==(const vector<Input::info>& lhs, const vector<JsonTx::input>& rhs)
     return true;
 }
 
-
-TEST(MODULAR_IDENTIFIER, OutputsRingCT)
+class DifferentJsonTxs :
+        public ::testing::TestWithParam<string>
 {
-    auto jtx = construct_jsontx("ddff95211b53c194a16c2b8f37ae44b643b8bd46b4cb402af961ecabeb8417b2");
+
+};
+
+class ModularIdentifierTest : public DifferentJsonTxs
+{};
+
+INSTANTIATE_TEST_CASE_P(
+    DifferentJsonTxs, ModularIdentifierTest,
+    ::testing::Values(
+        "ddff95211b53c194a16c2b8f37ae44b643b8bd46b4cb402af961ecabeb8417b2"s,
+        "f3c84fe925292ec5b4dc383d306d934214f4819611566051bca904d1cf4efceb"s,
+        "d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c"s));
+
+TEST_P(ModularIdentifierTest, OutputsRingCT)
+{
+    string tx_hash_str = GetParam();
+
+    auto jtx = construct_jsontx(tx_hash_str);
 
     ASSERT_TRUE(jtx);
 
@@ -112,9 +129,11 @@ TEST(MODULAR_IDENTIFIER, OutputsRingCT)
 }
 
 
-TEST(MODULAR_IDENTIFIER, OutputsRingCTCoinbaseTx)
+TEST_P(ModularIdentifierTest, OutputsRingCTCoinbaseTx)
 {
-    auto jtx = construct_jsontx("f3c84fe925292ec5b4dc383d306d934214f4819611566051bca904d1cf4efceb");
+    string tx_hash_str = GetParam();
+
+    auto jtx = construct_jsontx(tx_hash_str);
 
     ASSERT_TRUE(jtx);
 
@@ -131,9 +150,11 @@ TEST(MODULAR_IDENTIFIER, OutputsRingCTCoinbaseTx)
               jtx->recipients.at(0).amount);
 }
 
-TEST(MODULAR_IDENTIFIER, MultiOutputsRingCT)
+TEST_P(ModularIdentifierTest, MultiOutputsRingCT)
 {
-    auto jtx = construct_jsontx("d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c");
+    string tx_hash_str = GetParam();
+
+    auto jtx = construct_jsontx(tx_hash_str);
 
     ASSERT_TRUE(jtx);
 
@@ -190,9 +211,11 @@ TEST(MODULAR_IDENTIFIER, IntegratedPaymentID)
 }
 
 
-TEST(MODULAR_IDENTIFIER, GuessInputRingCT)
+TEST_P(ModularIdentifierTest, GuessInputRingCT)
 {
-    auto jtx = construct_jsontx("d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c");
+    string tx_hash_str = GetParam();
+
+    auto jtx = construct_jsontx(tx_hash_str);
 
     ASSERT_TRUE(jtx);
 
@@ -215,9 +238,11 @@ TEST(MODULAR_IDENTIFIER, GuessInputRingCT)
                 == jtx->sender.inputs);
 }
 
-TEST(MODULAR_IDENTIFIER, RealInputRingCT)
+TEST_P(ModularIdentifierTest, RealInputRingCT)
 {
-    auto jtx = construct_jsontx("d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c");
+    string tx_hash_str = GetParam();
+
+    auto jtx = construct_jsontx(tx_hash_str);
 
     ASSERT_TRUE(jtx);
 
