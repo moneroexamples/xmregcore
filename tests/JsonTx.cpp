@@ -144,28 +144,30 @@ JsonTx::init()
         populate_inputs(jtx["sender"]["inputs"], sender.inputs);
     }
 
-
-    for (auto const& jrecpient: jtx["recipient"])
+    if (jtx.count("recipient"))
     {
-        recipients.push_back(account{});
+        for (auto const& jrecpient: jtx["recipient"])
+        {
+            recipients.push_back(account{});
 
-        addr_and_viewkey_from_string(
-                 jrecpient["address"], jrecpient["viewkey"],              
-                 ntype, recipients.back().address,
-                 recipients.back().viewkey);
+            addr_and_viewkey_from_string(
+                     jrecpient["address"], jrecpient["viewkey"],              
+                     ntype, recipients.back().address,
+                     recipients.back().viewkey);
 
-        parse_str_secret_key(jrecpient["spendkey"],
-                recipients.back().spendkey);
+            parse_str_secret_key(jrecpient["spendkey"],
+                    recipients.back().spendkey);
 
-        recipients.back().amount = jrecpient["total_recieved"];
+            recipients.back().amount = jrecpient["total_recieved"];
 
-        recipients.back().is_subaddress = jrecpient["is_subaddress"];
-        recipients.back().ntype = ntype;
+            recipients.back().is_subaddress = jrecpient["is_subaddress"];
+            recipients.back().ntype = ntype;
 
-        populate_outputs(jrecpient["outputs"], recipients.back().outputs);
+            populate_outputs(jrecpient["outputs"], recipients.back().outputs);
 
-        // recipients dont have inputs so we do not populate
-        // them here.
+            // recipients dont have inputs so we do not populate
+            // them here.
+        }
     }
 
     if (!hex_to_tx(jtx["tx_hex"], tx, tx_hash, tx_prefix_hash))
