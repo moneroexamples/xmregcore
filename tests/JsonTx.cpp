@@ -215,7 +215,7 @@ check_and_adjust_path(string& in_path)
 boost::optional<JsonTx>
 construct_jsontx(string tx_hash)
 {
-    string tx_path  = "./tx/" + tx_hash + ".json";
+    string tx_path  = "./tx/tx_" + tx_hash + ".json";
 
     if (!check_and_adjust_path(tx_path))
     {
