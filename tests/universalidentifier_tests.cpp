@@ -104,7 +104,8 @@ INSTANTIATE_TEST_CASE_P(
         "ddff95211b53c194a16c2b8f37ae44b643b8bd46b4cb402af961ecabeb8417b2"s,
         "f3c84fe925292ec5b4dc383d306d934214f4819611566051bca904d1cf4efceb"s,
         "d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c"s,
-        "61f756a299efd17442eed5437fa03cbda6b01f341907845f8880bf30319fa01c"s));
+        "61f756a299efd17442eed5437fa03cbda6b01f341907845f8880bf30319fa01c"s,
+        "ae8f3ad29a40e02dff6a3267c769f08c0af3dc8858683c90ce3ef90212cb7e4b"s));
 
 TEST_P(ModularIdentifierTest, OutputsRingCT)
 {
@@ -232,8 +233,8 @@ TEST_P(ModularIdentifierTest, GuessInputRingCT)
 
    identifier.identify();
 
-//   for (auto const& input_info: identifier.get<0>()->get())
-//       cout << input_info << endl;
+   for (auto const& input_info: identifier.get<0>()->get())
+       cout << input_info << endl;
 
    EXPECT_TRUE(identifier.get<0>()->get()
                 == jtx->sender.inputs);

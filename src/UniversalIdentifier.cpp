@@ -255,6 +255,11 @@ void Input::identify(transaction const& tx,
                      public_key const& tx_pub_key,
                      vector<public_key> const& additional_tx_pub_keys)
 {
+
+    // if known_outputs is null do nothing
+    if (!known_outputs)
+        return;
+
      auto search_misses {0};
 
      auto input_no = tx.vin.size();
@@ -397,6 +402,11 @@ GuessInput::identify(transaction const& tx,
 
     // this will store guessed inputs
     vector<info> local_identified_inputs;
+        
+    // will keep output public key and amount
+    // of mixins in the given key image which
+    // are ours.
+    known_outputs_t known_outputs_map;
 
     auto input_no = tx.vin.size();
 
@@ -423,11 +433,6 @@ GuessInput::identify(transaction const& tx,
         mcore->get_output_tx_and_index(
                     in_key.amount, absolute_offsets, indices);
 
-        // will keep output public key and amount
-        // of mixins in the given key image which
-        // are ours.
-        known_outputs_t known_outputs_map;
-
         // for each found mixin tx, check if any key image
         // generated using our outputs in the mixin tx
         // matches the given key image in the current tx
@@ -452,6 +457,7 @@ GuessInput::identify(transaction const& tx,
 
            identifier.identify();
 
+
            for (auto const& found_output: identifier.get<Output>()->get())
            {
                // add found output into the map of known ouputs
@@ -466,29 +472,26 @@ GuessInput::identify(transaction const& tx,
         // guess which of them was used in the current
         // key image.
 
-        // to do this, set known_outputs to the known_outputs_map
-        known_outputs = &known_outputs_map;
-
-        // and now execute baseclasses (i.e. Input) identify
-        // method. The method will use known_outputs as
-        // its list of outputs
-        Input::identify(tx, tx_pub_key, additional_tx_pub_keys);
-
-        // copy what was identified using Input::identify
-        // into local_identified_inputs
-        local_identified_inputs.insert(local_identified_inputs.end(),
-                                       identified_inputs.begin(),
-                                       identified_inputs.end());
-
-        identified_inputs.clear();
-
     } // for (auto i = 0u; i < input_no; ++i)
+        
+    // to do this, set known_outputs to the known_outputs_map
+    known_outputs = &known_outputs_map;
+
+    // and now execute baseclasses (i.e. Input) identify
+    // method. The method will use known_outputs as
+    // its list of outputs
+    Input::identify(tx, tx_pub_key, additional_tx_pub_keys);
+    
+    // copy what was identified using Input::identify
+    // into local_identified_inputs
+    local_identified_inputs.insert(local_identified_inputs.end(),
+                                   identified_inputs.begin(),
+                                   identified_inputs.end());
 
 
     // once all key images have been scanned,
     // copy local_identified_inputs into identified_inputs
     // so that we can return them to the end user
-
     identified_inputs = std::move(local_identified_inputs);
 }
 
@@ -566,8 +569,9 @@ void RealInput::identify(transaction const& tx,
                                         get_address()->address.m_spend_public_key,
                                         key_img_generated))
                 {
-                    throw std::runtime_error("Cant generate key image for output: "
-                                                        + pod_to_hex(found_output.pub_key));
+                    throw std::runtime_error("Cant generate " 
+                            "key image for output: "
+                            + pod_to_hex(found_output.pub_key));
                 }
 
                 // now check if current key image in the tx which we
@@ -582,7 +586,7 @@ void RealInput::identify(transaction const& tx,
                     break;
                 }
 
-            } // auto const& found_output: identifier.get<Output>()->get_outputs()
+            } // auto const& found_output: identifier.get<
 
             // if key_image_info has been populated, there is no
             // reason to keep check remaning outputs in the mixin tx
@@ -603,7 +607,9 @@ void RealInput::identify(transaction const& tx,
 
 
 // just a copy from bool
-// device_default::encrypt_payment_id(crypto::hash8 &payment_id, const crypto::public_key &public_key, const crypto::secret_key &secret_key)
+// device_default::encrypt_payment_id(crypto::hash8 
+// &payment_id, const crypto::public_key &public_key, 
+// const crypto::secret_key &secret_key)
 template <typename HashT>
 bool
 PaymentID<HashT>::encrypt_payment_id(
@@ -662,11 +668,13 @@ PaymentID<HashT>::get_payment_id(
     if (find_tx_extra_field_by_type(tx_extra_fields, extra_nonce))
     {
         // first check for encrypted id and then for normal one
-        if(get_encrypted_payment_id_from_tx_extra_nonce(extra_nonce.nonce, payment_id8))
+        if(get_encrypted_payment_id_from_tx_extra_nonce(extra_nonce.nonce, 
+                    payment_id8))
         {
             return make_tuple(payment_id, payment_id8);
         }
-        else if (get_payment_id_from_tx_extra_nonce(extra_nonce.nonce, payment_id))
+        else if (get_payment_id_from_tx_extra_nonce(extra_nonce.nonce, 
+                    payment_id))
         {
             return make_tuple(payment_id, payment_id8);
         }
@@ -675,8 +683,10 @@ PaymentID<HashT>::get_payment_id(
     return make_tuple(payment_id, payment_id8);
 }
 
-template tuple<crypto::hash, crypto::hash8> PaymentID<crypto::hash8>::get_payment_id(transaction const& tx) const;
-template tuple<crypto::hash, crypto::hash8> PaymentID<crypto::hash>::get_payment_id(transaction const& tx) const;
+template tuple<crypto::hash, crypto::hash8> 
+PaymentID<crypto::hash8>::get_payment_id(transaction const& tx) const;
+template tuple<crypto::hash, crypto::hash8> 
+PaymentID<crypto::hash>::get_payment_id(transaction const& tx) const;
 
 
 }
