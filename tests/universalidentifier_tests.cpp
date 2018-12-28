@@ -233,11 +233,38 @@ TEST_P(ModularIdentifierTest, GuessInputRingCT)
 
    identifier.identify();
 
-   for (auto const& input_info: identifier.get<0>()->get())
-       cout << input_info << endl;
+//   for (auto const& input_info: identifier.get<0>()->get())
+//       cout << input_info << endl;
 
-   EXPECT_TRUE(identifier.get<0>()->get()
-                == jtx->sender.inputs);
+   auto const& found_inputs = identifier.get<0>()->get();
+
+   EXPECT_GE(found_inputs.size(),
+             jtx->sender.inputs.size());
+
+   if (!jtx->sender.inputs.empty())
+   {
+       // to check whether GuessIdentifier is correct
+       // we check weath all key images are present
+       // in its found_inputs
+
+       for (auto const& input: jtx->sender.inputs)
+       {
+           auto it = find_if(found_inputs.begin(),
+                             found_inputs.end(),
+                             [ki = input.key_img](auto const& a)
+           {
+               return ki == a.key_img;
+           });
+
+           if (it == found_inputs.end())
+           {
+                FAIL() << "Expected input not identified";
+           }
+       }
+
+       SUCCEED();
+   }
+
 }
 
 TEST_P(ModularIdentifierTest, RealInputRingCT)
