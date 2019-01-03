@@ -1,6 +1,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include <boost/iterator/filter_iterator.hpp>
+
 #include "../src/UniversalIdentifier.hpp"
 
 #include "mocks.h"
@@ -9,7 +11,7 @@
     EXPECT_CALL(mcore, get_output_tx_and_index(_, _, _)) \
             .WillRepeatedly( \
                 Invoke(&*jtx, &JsonTx::get_output_tx_and_index)); \
-        \
+\
     EXPECT_CALL(mcore, get_tx(_, _)) \
             .WillRepeatedly( \
                 Invoke(&*jtx, &JsonTx::get_tx)); \
@@ -244,26 +246,55 @@ TEST_P(ModularIdentifierTest, GuessInputRingCT)
    if (!jtx->sender.inputs.empty())
    {
        // to check whether GuessIdentifier is correct
-       // we check weath all key images are present
+       // we check weath all outputs and key images are present
        // in its found_inputs
-
+       //
+           
        for (auto const& input: jtx->sender.inputs)
        {
-           auto it = find_if(found_inputs.begin(),
-                             found_inputs.end(),
-                             [ki = input.key_img](auto const& a)
-           {
-               return ki == a.key_img;
-           });
+       
+           // make lambda that will check wether
+           // current input's public key matches a
+           // given one
+           //
+           // to do this, first we find all public
+           // output keys in found_inputs vector
+           // that GuessInput populated
 
-           if (it == found_inputs.end())
+           using input_elem_type
+            = std::remove_reference_t<decltype(found_inputs)>::value_type;
+
+           vector<input_elem_type const*>
+               matched_public_keys;
+
+           for (auto const& fin: found_inputs)
            {
-                FAIL() << "Expected input not identified";
+               if (input.out_pub_key == fin.out_pub_key)
+                   matched_public_keys.push_back(&fin);
            }
-       }
 
-       SUCCEED();
-   }
+           if (matched_public_keys.empty())
+                FAIL() << "matched_public_keys is empty";
+
+           // second, if we found something, check
+           // if matched_public_keys contains
+           // key image from senders.input
+
+           bool match_found {false};
+           
+           for (auto const matched_pk: matched_public_keys)
+               if (input.key_img == matched_pk->key_img)
+               {
+                   match_found = true;
+                   SUCCEED();
+               }
+
+           if (!match_found)
+               FAIL() << "No maching key image found";
+
+       } //for (auto const& input: jtx->sender.inputs)
+
+   } // if (!jtx->sender.inputs.empty())
 
 }
 
