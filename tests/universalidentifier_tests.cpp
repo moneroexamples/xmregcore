@@ -176,11 +176,11 @@ TEST_P(ModularIdentifierTest, MultiOutputsRingCT)
 }
 
 
-TEST(MODULAR_IDENTIFIER, LegacyPaymentID)
+TEST_P(ModularIdentifierTest, LegacyPaymentID)
 {
-    auto jtx = construct_jsontx("d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c");
+    string tx_hash_str = GetParam();
 
-    ASSERT_TRUE(jtx);
+    auto jtx = construct_jsontx(tx_hash_str);
 
     auto identifier = make_identifier(jtx->tx,
           make_unique<LegacyPaymentID>(nullptr, nullptr));
@@ -194,9 +194,12 @@ TEST(MODULAR_IDENTIFIER, LegacyPaymentID)
                 == jtx->payment_id);
 }
 
-TEST(MODULAR_IDENTIFIER, IntegratedPaymentID)
+
+TEST_P(ModularIdentifierTest, IntegratedPaymentID)
 {
-    auto jtx = construct_jsontx("ddff95211b53c194a16c2b8f37ae44b643b8bd46b4cb402af961ecabeb8417b2");
+    string tx_hash_str = GetParam();
+
+    auto jtx = construct_jsontx(tx_hash_str);
 
     ASSERT_TRUE(jtx);
 
