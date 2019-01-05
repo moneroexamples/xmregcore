@@ -108,7 +108,7 @@ TEST(ACCOUNT, FullConstructionSubAddress)
     EXPECT_EQ(acc->ai2str(), jrecipient["address"]);
     EXPECT_EQ(acc->vk2str(), jrecipient["viewkey"]);
     EXPECT_EQ(acc->sk2str(), jrecipient["spendkey"]);
-    EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::SUBADDRRES);
+    EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::SUBADDRESS);
 
     EXPECT_TRUE(acc->ai().is_subaddress);
     EXPECT_TRUE(acc);

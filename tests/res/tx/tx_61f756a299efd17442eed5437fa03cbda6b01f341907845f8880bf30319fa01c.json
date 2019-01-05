@@ -1,0 +1,94 @@
+{
+    "_comment": "coinbase from private stagenet",
+    "block": "0111010101010201010405626c6f636b0af5040107c2eab1dc051a78166c013d25948fca5353bc1df56d09e5e8c16f95bdc3742567e5d12f321a1592df91014601ff0a06cfa5db080220c045d480c885cad1e92ce3751486ddae8b8a4bcc27394dfaa2aae23816ffd380a8d6b907024a346dd66a684b8d72044c1c950b975c7c75b4f3b5efd4f737ea4cd1873c0e4a8088aca3cf02028ce7582f9644c239f5c701f7f774cc6e80c5fe02e438d5c36a4daaa31fa466b38090cad2c60e028b3e335bc4fff84383228fddfb8379d1a915cdb7975e1bb720b54da8207a203c80e08d84ddcb01026fb1b129496c67b5062f3077132e061651d07eac16cf940bcb30859f8df6ed1880c0caf384a3020294e34277781bbaefddecb5644e719be6fb2999dd35310f6c1a25312c444332272101993f85e14fb4001e9a587b39921c32d756e7190dbe01c70096f79464ab91075c00",
+    "block_version": [
+        1,
+        7
+    ],
+    "fee": 0,
+    "generated_using": "./jsonifyxmrtx 61f756a299efd17442eed5437fa03cbda6b01f341907845f8880bf30319fa01c -b /home/mwo/stagenet/node_01/stagenet/lmdb -r 56bCoEmLPT8XS82k2ovp5EUYLzBt9pYNW2LXUFsZiv8S3Mt21FZ5qQaAroko1enzw3eGr9qC7X1D7Geoo2RrAotYPx1iovY,42ba20adb337e5eca797565be11c9adb0a8bef8c830bccc2df712535d3b8f608,b0ef6bd527b9b23b9ceef70dc8b4cd1ee83ca14541964e764ad23f5151204f0f -m coinbase from private stagenet -c -w",
+    "height": 10,
+    "inputs": [],
+    "is_coinbase": true,
+    "is_ringct": false,
+    "nettype": 2,
+    "outputs": [
+        {
+            "amount": 18272975,
+            "index": 0,
+            "public_key": "20c045d480c885cad1e92ce3751486ddae8b8a4bcc27394dfaa2aae23816ffd3"
+        },
+        {
+            "amount": 2000000000,
+            "index": 1,
+            "public_key": "4a346dd66a684b8d72044c1c950b975c7c75b4f3b5efd4f737ea4cd1873c0e4a"
+        },
+        {
+            "amount": 90000000000,
+            "index": 2,
+            "public_key": "8ce7582f9644c239f5c701f7f774cc6e80c5fe02e438d5c36a4daaa31fa466b3"
+        },
+        {
+            "amount": 500000000000,
+            "index": 3,
+            "public_key": "8b3e335bc4fff84383228fddfb8379d1a915cdb7975e1bb720b54da8207a203c"
+        },
+        {
+            "amount": 7000000000000,
+            "index": 4,
+            "public_key": "6fb1b129496c67b5062f3077132e061651d07eac16cf940bcb30859f8df6ed18"
+        },
+        {
+            "amount": 10000000000000,
+            "index": 5,
+            "public_key": "94e34277781bbaefddecb5644e719be6fb2999dd35310f6c1a25312c44433227"
+        }
+    ],
+    "payment_id8": "0000000000000000",
+    "payment_id8e": "0000000000000000",
+    "rct_type": 0,
+    "recipient": [
+        {
+            "address": "56bCoEmLPT8XS82k2ovp5EUYLzBt9pYNW2LXUFsZiv8S3Mt21FZ5qQaAroko1enzw3eGr9qC7X1D7Geoo2RrAotYPx1iovY",
+            "is_subaddress": false,
+            "outputs": [
+                [
+                    0,
+                    "20c045d480c885cad1e92ce3751486ddae8b8a4bcc27394dfaa2aae23816ffd3",
+                    18272975
+                ],
+                [
+                    1,
+                    "4a346dd66a684b8d72044c1c950b975c7c75b4f3b5efd4f737ea4cd1873c0e4a",
+                    2000000000
+                ],
+                [
+                    2,
+                    "8ce7582f9644c239f5c701f7f774cc6e80c5fe02e438d5c36a4daaa31fa466b3",
+                    90000000000
+                ],
+                [
+                    3,
+                    "8b3e335bc4fff84383228fddfb8379d1a915cdb7975e1bb720b54da8207a203c",
+                    500000000000
+                ],
+                [
+                    4,
+                    "6fb1b129496c67b5062f3077132e061651d07eac16cf940bcb30859f8df6ed18",
+                    7000000000000
+                ],
+                [
+                    5,
+                    "94e34277781bbaefddecb5644e719be6fb2999dd35310f6c1a25312c44433227",
+                    10000000000000
+                ]
+            ],
+            "spendkey": "b0ef6bd527b9b23b9ceef70dc8b4cd1ee83ca14541964e764ad23f5151204f0f",
+            "total_recieved": 17592018272975,
+            "viewkey": "42ba20adb337e5eca797565be11c9adb0a8bef8c830bccc2df712535d3b8f608"
+        }
+    ],
+    "tx_hash": "61f756a299efd17442eed5437fa03cbda6b01f341907845f8880bf30319fa01c",
+    "tx_hex": "014601ff0a06cfa5db080220c045d480c885cad1e92ce3751486ddae8b8a4bcc27394dfaa2aae23816ffd380a8d6b907024a346dd66a684b8d72044c1c950b975c7c75b4f3b5efd4f737ea4cd1873c0e4a8088aca3cf02028ce7582f9644c239f5c701f7f774cc6e80c5fe02e438d5c36a4daaa31fa466b38090cad2c60e028b3e335bc4fff84383228fddfb8379d1a915cdb7975e1bb720b54da8207a203c80e08d84ddcb01026fb1b129496c67b5062f3077132e061651d07eac16cf940bcb30859f8df6ed1880c0caf384a3020294e34277781bbaefddecb5644e719be6fb2999dd35310f6c1a25312c444332272101993f85e14fb4001e9a587b39921c32d756e7190dbe01c70096f79464ab91075c",
+    "type": "transaction"
+}

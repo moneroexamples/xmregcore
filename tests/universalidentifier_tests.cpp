@@ -1,9 +1,24 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include <boost/iterator/filter_iterator.hpp>
+
 #include "../src/UniversalIdentifier.hpp"
 
 #include "mocks.h"
+
+#define ADD_MOCKS(mcore) \
+    EXPECT_CALL(mcore, get_output_tx_and_index(_, _, _)) \
+            .WillRepeatedly( \
+                Invoke(&*jtx, &JsonTx::get_output_tx_and_index)); \
+\
+    EXPECT_CALL(mcore, get_tx(_, _)) \
+            .WillRepeatedly( \
+                Invoke(&*jtx, &JsonTx::get_tx)); \
+        \
+    EXPECT_CALL(mcore, get_output_key(_, _, _)) \
+            .WillRepeatedly( \
+                Invoke(&*jtx, &JsonTx::get_output_key));
 
 
 namespace
@@ -11,6 +26,8 @@ namespace
 
 using namespace xmreg;
 
+
+// equality operators for outputs
 
 inline bool
 operator==(const Output::info& lhs, const JsonTx::output& rhs)
@@ -41,9 +58,62 @@ operator==(const vector<Output::info>& lhs, const vector<JsonTx::output>& rhs)
     return true;
 }
 
-TEST(MODULAR_IDENTIFIER, OutputsRingCT)
+
+
+// equality operators for inputs
+
+inline bool
+operator==(const Input::info& lhs, const JsonTx::input& rhs)
 {
-    auto jtx = construct_jsontx("ddff95211b53c194a16c2b8f37ae44b643b8bd46b4cb402af961ecabeb8417b2");
+    return lhs.amount == rhs.amount
+            && lhs.out_pub_key == rhs.out_pub_key
+            && lhs.key_img == rhs.key_img;
+}
+
+inline bool
+operator!=(const Input::info& lhs, const JsonTx::input& rhs)
+{
+    return !(lhs == rhs);
+}
+
+inline bool
+operator==(const vector<Input::info>& lhs, const vector<JsonTx::input>& rhs)
+{
+    if (lhs.size() != rhs.size())
+        return false;
+
+    for (size_t i = 0; i < lhs.size(); i++)
+    {
+        if (lhs[i] != rhs[i])
+            return false;
+    }
+
+    return true;
+}
+
+class DifferentJsonTxs :
+        public ::testing::TestWithParam<string>
+{
+
+};
+
+class ModularIdentifierTest : public DifferentJsonTxs
+{};
+
+INSTANTIATE_TEST_CASE_P(
+    DifferentJsonTxs, ModularIdentifierTest,
+    ::testing::Values(
+        "ddff95211b53c194a16c2b8f37ae44b643b8bd46b4cb402af961ecabeb8417b2"s,
+        "f3c84fe925292ec5b4dc383d306d934214f4819611566051bca904d1cf4efceb"s,
+        "d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c"s,
+        "61f756a299efd17442eed5437fa03cbda6b01f341907845f8880bf30319fa01c"s,
+        "ae8f3ad29a40e02dff6a3267c769f08c0af3dc8858683c90ce3ef90212cb7e4b"s));
+
+TEST_P(ModularIdentifierTest, OutputsRingCT)
+{
+    string tx_hash_str = GetParam();
+
+    auto jtx = construct_jsontx(tx_hash_str);
 
     ASSERT_TRUE(jtx);
 
@@ -63,9 +133,11 @@ TEST(MODULAR_IDENTIFIER, OutputsRingCT)
 }
 
 
-TEST(MODULAR_IDENTIFIER, OutputsRingCTCoinbaseTx)
+TEST_P(ModularIdentifierTest, OutputsRingCTCoinbaseTx)
 {
-    auto jtx = construct_jsontx("f3c84fe925292ec5b4dc383d306d934214f4819611566051bca904d1cf4efceb");
+    string tx_hash_str = GetParam();
+
+    auto jtx = construct_jsontx(tx_hash_str);
 
     ASSERT_TRUE(jtx);
 
@@ -82,9 +154,11 @@ TEST(MODULAR_IDENTIFIER, OutputsRingCTCoinbaseTx)
               jtx->recipients.at(0).amount);
 }
 
-TEST(MODULAR_IDENTIFIER, MultiOutputsRingCT)
+TEST_P(ModularIdentifierTest, MultiOutputsRingCT)
 {
-    auto jtx = construct_jsontx("d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c");
+    string tx_hash_str = GetParam();
+
+    auto jtx = construct_jsontx(tx_hash_str);
 
     ASSERT_TRUE(jtx);
 
@@ -102,11 +176,11 @@ TEST(MODULAR_IDENTIFIER, MultiOutputsRingCT)
 }
 
 
-TEST(MODULAR_IDENTIFIER, LegacyPaymentID)
+TEST_P(ModularIdentifierTest, LegacyPaymentID)
 {
-    auto jtx = construct_jsontx("d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c");
+    string tx_hash_str = GetParam();
 
-    ASSERT_TRUE(jtx);
+    auto jtx = construct_jsontx(tx_hash_str);
 
     auto identifier = make_identifier(jtx->tx,
           make_unique<LegacyPaymentID>(nullptr, nullptr));
@@ -115,11 +189,17 @@ TEST(MODULAR_IDENTIFIER, LegacyPaymentID)
 
    EXPECT_TRUE(identifier.get<0>()->get()
                 == jtx->payment_id);
+
+   EXPECT_TRUE(identifier.get<0>()->raw()
+                == jtx->payment_id);
 }
 
-TEST(MODULAR_IDENTIFIER, IntegratedPaymentID)
+
+TEST_P(ModularIdentifierTest, IntegratedPaymentID)
 {
-    auto jtx = construct_jsontx("ddff95211b53c194a16c2b8f37ae44b643b8bd46b4cb402af961ecabeb8417b2");
+    string tx_hash_str = GetParam();
+
+    auto jtx = construct_jsontx(tx_hash_str);
 
     ASSERT_TRUE(jtx);
 
@@ -132,24 +212,106 @@ TEST(MODULAR_IDENTIFIER, IntegratedPaymentID)
 
    EXPECT_TRUE(identifier.get<0>()->get()
                 == jtx->payment_id8e);
+
+   EXPECT_TRUE(identifier.get<0>()->raw()
+                == jtx->payment_id8);
 }
 
 
-TEST(MODULAR_IDENTIFIER, RealInputRingCT)
+TEST_P(ModularIdentifierTest, GuessInputRingCT)
 {
-    auto jtx = construct_jsontx("d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c");
+    string tx_hash_str = GetParam();
+
+    auto jtx = construct_jsontx(tx_hash_str);
 
     ASSERT_TRUE(jtx);
 
     MockMicroCore mcore;
 
-    EXPECT_CALL(mcore, get_output_tx_and_index(_, _, _))
-            .WillRepeatedly(
-                Invoke(&*jtx, &JsonTx::get_output_tx_and_index));
+    ADD_MOCKS(mcore);
 
-    EXPECT_CALL(mcore, get_tx(_, _))
-            .WillRepeatedly(
-                Invoke(&*jtx, &JsonTx::get_tx));
+    auto identifier = make_identifier(jtx->tx,
+          make_unique<GuessInput>(
+                    &jtx->sender.address,
+                    &jtx->sender.viewkey,
+                    &mcore));
+
+   identifier.identify();
+
+//   for (auto const& input_info: identifier.get<0>()->get())
+//       cout << input_info << endl;
+
+   auto const& found_inputs = identifier.get<0>()->get();
+
+   EXPECT_GE(found_inputs.size(),
+             jtx->sender.inputs.size());
+
+   if (!jtx->sender.inputs.empty())
+   {
+       // to check whether GuessIdentifier is correct
+       // we check weath all outputs and key images are present
+       // in its found_inputs
+       //
+           
+       for (auto const& input: jtx->sender.inputs)
+       {
+       
+           // make lambda that will check wether
+           // current input's public key matches a
+           // given one
+           //
+           // to do this, first we find all public
+           // output keys in found_inputs vector
+           // that GuessInput populated
+
+           using input_elem_type
+            = std::remove_reference_t<decltype(found_inputs)>::value_type;
+
+           vector<input_elem_type const*>
+               matched_public_keys;
+
+           for (auto const& fin: found_inputs)
+           {
+               if (input.out_pub_key == fin.out_pub_key)
+                   matched_public_keys.push_back(&fin);
+           }
+
+           if (matched_public_keys.empty())
+                FAIL() << "matched_public_keys is empty";
+
+           // second, if we found something, check
+           // if matched_public_keys contains
+           // key image from senders.input
+
+           bool match_found {false};
+           
+           for (auto const matched_pk: matched_public_keys)
+               if (input.key_img == matched_pk->key_img)
+               {
+                   match_found = true;
+                   SUCCEED();
+               }
+
+           if (!match_found)
+               FAIL() << "No maching key image found";
+
+       } //for (auto const& input: jtx->sender.inputs)
+
+   } // if (!jtx->sender.inputs.empty())
+
+}
+
+TEST_P(ModularIdentifierTest, RealInputRingCT)
+{
+    string tx_hash_str = GetParam();
+
+    auto jtx = construct_jsontx(tx_hash_str);
+
+    ASSERT_TRUE(jtx);
+
+    MockMicroCore mcore;
+
+    ADD_MOCKS(mcore);
 
     auto identifier = make_identifier(jtx->tx,
           make_unique<RealInput>(
@@ -160,10 +322,11 @@ TEST(MODULAR_IDENTIFIER, RealInputRingCT)
 
    identifier.identify();
 
-   for (auto const& input_info: identifier.get<0>()->get())
-       cout << input_info << endl;
+//   for (auto const& input_info: identifier.get<0>()->get())
+//       cout << input_info << endl;
 
-   EXPECT_TRUE(identifier.get<0>()->get().size() == 2);
+   EXPECT_TRUE(identifier.get<0>()->get()
+                == jtx->sender.inputs);
 }
 
 }
