@@ -107,7 +107,10 @@ INSTANTIATE_TEST_CASE_P(
         "f3c84fe925292ec5b4dc383d306d934214f4819611566051bca904d1cf4efceb"s,
         "d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c"s,
         "61f756a299efd17442eed5437fa03cbda6b01f341907845f8880bf30319fa01c"s,
-        "ae8f3ad29a40e02dff6a3267c769f08c0af3dc8858683c90ce3ef90212cb7e4b"s));
+        "ae8f3ad29a40e02dff6a3267c769f08c0af3dc8858683c90ce3ef90212cb7e4b"s,
+        "140807b970e52b7c633d7ca0ba5be603922aa7a2a1213bdd16d3c1a531402bf6"s,
+        "a7a4e3bdb305b97c43034440b0bc5125c23b24d0730189261151c0aa3f2a05fc"s
+        ));
 
 TEST_P(ModularIdentifierTest, OutputsRingCT)
 {
