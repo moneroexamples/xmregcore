@@ -178,6 +178,8 @@ account_factory(network_type net_type,
     else
         return make_unique<PrimaryAccount>(net_type, addr_info,
                                           std::forward<T>(args)...);
+
+    return nullptr;
 }
 
 inline secret_key

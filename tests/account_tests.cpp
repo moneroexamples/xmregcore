@@ -135,15 +135,18 @@ TEST(ACCOUNT, FailedConstructionFromNonString)
 
     address_parse_info wrong_address {};
 
-    // just randmoly generate the two keys.
-    // so there are invalid, unless we assume
-    // that by chance we can generate a pair of correct keys.
-    crypto::rand(64, reinterpret_cast<uint8_t*>(
-                     &wrong_address.address.m_view_public_key));
+    // just a key for wich crypto::check_key fails.
+    string wrong_key (64, 'z');
 
-    crypto::rand(64, reinterpret_cast<uint8_t*>(
-                     &wrong_address.address.m_spend_public_key));
+    wrong_address.address.m_view_public_key 
+        = *reinterpret_cast<public_key const*>(wrong_key.data()); 
+    
+    //cout << '\n' << pod_to_hex(wrong_address.address.m_view_public_key) 
+    //     << '\n';
 
+    wrong_address.address.m_spend_public_key 
+        = wrong_address.address.m_view_public_key; 
+    
     auto acc = account_factory(network_type::STAGENET, wrong_address);
 
     EXPECT_EQ(acc, nullptr);
