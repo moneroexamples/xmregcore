@@ -76,12 +76,12 @@ public:
                        bool(crypto::hash const& tx_hash,
                             transaction& tx));
 
-    MOCK_METHOD3(get_output_key,
+    MOCK_CONST_METHOD3(get_output_key,
                     void(uint64_t amount,
                          vector<uint64_t> const& absolute_offsets,
                          vector<output_data_t>& outputs));
 
-    MOCK_METHOD2(get_output_key,
+    MOCK_CONST_METHOD2(get_output_key,
                     output_data_t(uint64_t amount,
                                   uint64_t global_amount_index));
 
@@ -102,12 +102,6 @@ public:
     MOCK_CONST_METHOD2(get_mempool_txs,
                        bool(vector<tx_info>& tx_infos,
                             vector<spent_key_image_info>& key_image_infos));
-
-      // dont need to mock this function currently
-//    MOCK_METHOD3(decrypt_payment_id,
-//                       bool(crypto::hash8& payment_id,
-//                            crypto::public_key const& public_key,
-//                            crypto::secret_key const& secret_key));
 
 };
 
