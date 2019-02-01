@@ -46,8 +46,8 @@ public:
                        bool(uint64_t height, block& blk));
 
     MOCK_CONST_METHOD2(get_blocks_range,
-                       std::vector<block>(const uint64_t& h1,
-                                          const uint64_t& h2));
+                       std::vector<block>(uint64_t h1,
+                                          uint64_t h2));
 
     MOCK_CONST_METHOD3(get_transactions,
                        bool(const std::vector<crypto::hash>& txs_ids,
@@ -64,11 +64,11 @@ public:
                             uint64_t& tx_id));
 
     MOCK_CONST_METHOD2(get_output_tx_and_index,
-                       tx_out_index(uint64_t const& amount,
-                                    uint64_t const& index));
+                       tx_out_index(uint64_t amount,
+                                    uint64_t index));
 
     MOCK_CONST_METHOD3(get_output_tx_and_index,
-                       void(const uint64_t& amount,
+                       void(uint64_t amount,
                             const std::vector<uint64_t> &offsets,
                             std::vector<tx_out_index> &indices));
 
@@ -89,8 +89,8 @@ public:
                     std::vector<uint64_t>(uint64_t const& tx_id));
 
     MOCK_CONST_METHOD2(get_random_outs_for_amounts,
-                        bool(COMMAND_RPC_GET_OUTPUT_HISTOGRAM::request const& req,
-                             COMMAND_RPC_GET_OUTPUT_HISTOGRAM::response& res));
+                    bool(COMMAND_RPC_GET_OUTPUT_HISTOGRAM::request const& req,
+                         COMMAND_RPC_GET_OUTPUT_HISTOGRAM::response& res));
 
     MOCK_CONST_METHOD2(get_outs,
                         bool(const COMMAND_RPC_GET_OUTPUTS_BIN::request& req,

@@ -107,6 +107,108 @@ MicroCore::get_nettype() const
     return nettype;
 }
 
+void
+MicroCore::get_output_key(uint64_t amount,
+               vector<uint64_t> const& absolute_offsets,
+               vector<cryptonote::output_data_t>& outputs) 
+                const 
+{
+    core_storage.get_db()
+            .get_output_key(epee::span<const uint64_t>(&amount, 1),
+                            absolute_offsets, outputs);
+}
+
+
+output_data_t
+MicroCore::get_output_key(uint64_t amount,
+               uint64_t global_amount_index) const 
+{
+    return core_storage.get_db()
+                .get_output_key(amount, global_amount_index);
+}
+
+bool
+MicroCore::get_transactions(
+        std::vector<crypto::hash> const& txs_ids,
+        std::vector<transaction>& txs,
+        std::vector<crypto::hash>& missed_txs) const
+{
+    return core_storage.get_transactions(txs_ids, txs, missed_txs);
+}
+
+
+std::vector<block>
+MicroCore::get_blocks_range(uint64_t h1, uint64_t h2) const
+{
+    return core_storage.get_db().get_blocks_range(h1, h2);
+}
+
+uint64_t
+MicroCore::get_tx_unlock_time(crypto::hash const& tx_hash) const
+{
+    return core_storage.get_db().get_tx_unlock_time(tx_hash);
+}
+
+bool
+MicroCore::have_tx(crypto::hash const& tx_hash) const
+{
+    return core_storage.have_tx(tx_hash);
+}
+
+bool
+MicroCore::tx_exists(crypto::hash const& tx_hash, uint64_t& tx_id) const
+{
+    return core_storage.get_db().tx_exists(tx_hash, tx_id);
+}
+
+tx_out_index
+MicroCore::get_output_tx_and_index(uint64_t amount, uint64_t index) const
+{
+    return core_storage.get_db().get_output_tx_and_index(amount, index);
+}
+
+uint64_t
+MicroCore::get_tx_block_height(crypto::hash const& tx_hash) const
+{
+    return core_storage.get_db().get_tx_block_height(tx_hash);
+}
+
+std::vector<uint64_t>
+MicroCore::get_tx_amount_output_indices(uint64_t tx_id) const
+{
+    return core_storage.get_db()
+            .get_tx_amount_output_indices(tx_id).front();
+}
+
+bool
+MicroCore::get_mempool_txs(
+        std::vector<tx_info>& tx_infos,
+        std::vector<spent_key_image_info>& key_image_infos) const
+{
+    return m_mempool.get_transactions_and_spent_keys_info(
+                tx_infos, key_image_infos);
+}
+
+
+uint64_t
+MicroCore::get_current_blockchain_height() const
+{
+    return core_storage.get_current_blockchain_height();
+}
+
+void
+MicroCore::get_output_tx_and_index(
+        uint64_t amount,
+        std::vector<uint64_t> const& offsets,
+        std::vector<tx_out_index>& indices) const 
+{
+    //                           tx_hash     , index in tx
+    // tx_out_index is std::pair<crypto::hash, uint64_t>;
+
+    core_storage.get_db().get_output_tx_and_index(
+                amount, offsets, indices);
+}
+
 bool
 MicroCore::get_block_from_height(uint64_t height, block& blk) const
 {
@@ -124,6 +226,19 @@ MicroCore::get_block_from_height(uint64_t height, block& blk) const
     return true;
 }
 
+
+bool
+MicroCore::get_outs(COMMAND_RPC_GET_OUTPUTS_BIN::request const& req,
+         COMMAND_RPC_GET_OUTPUTS_BIN::response& res) const
+{
+    return core_storage.get_outs(req, res);
+}
+
+uint64_t
+MicroCore::get_dynamic_base_fee_estimate(uint64_t grace_blocks) const
+{
+    return core_storage.get_dynamic_base_fee_estimate(grace_blocks);
+}
 
 bool
 MicroCore::get_block_complete_entry(block const& b, block_complete_entry& bce)
@@ -231,24 +346,23 @@ MicroCore::get_device() const
     return m_device;
 }
 
+
+bool
+MicroCore::decrypt_payment_id(crypto::hash8& payment_id,
+                   public_key const& public_key,
+                   secret_key const& secret_key) const
+{
+    return m_device->decrypt_payment_id(payment_id,
+                                        public_key,
+                                        secret_key);
+}
+
+
 bool
 MicroCore::init_success() const
 {
     return initialization_succeded;
 }
 
-//MicroCore::~MicroCore()
-//{
-//    //cout << "\n\nMicroCore::~MicroCore()\n\n";
-
-//    if (initialization_succeded)
-//    {
-//        //core_storage.get_db().safesyncmode(true);
-//        if (core_storage.get_db().is_open())
-//            core_storage.get_db().close();
-//        //cout << "\n\n core_storage.get_db().close();;\n\n";
-//    }
-
-//}
 
 }
