@@ -87,16 +87,6 @@ foreach (l ${LIBS})
 endforeach()
 
 
-
-#if (EXISTS ${MONERO_BUILD_DIR}/src/ringct/libringct_basic.a)
-#	message(STATUS FindMonero " found libringct_basic.a")
-#	add_library(ringct_basic STATIC IMPORTED)
-#	set_property(TARGET ringct_basic
-#			PROPERTY IMPORTED_LOCATION ${MONERO_BUILD_DIR}/src/ringct/libringct_basic.a)
-
-#        set(Monero_LIBRARIES ${Monero_LIBRARIES} ringct_basic)
-#endif()
-
 message("FOUND Monero_LIBRARIES: ${Monero_LIBRARIES}")
 
 message(STATUS ${MONERO_SOURCE_DIR}/build)

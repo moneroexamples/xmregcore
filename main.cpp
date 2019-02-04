@@ -1,6 +1,8 @@
 #include "src/MicroCore.h"
 #include "src/tools.h"
 
+#include "version.h"
+
 #include <iostream>
 #include <memory>
 
@@ -21,6 +23,8 @@ main(int ac, const char* av[])
     string blockchain_path = xmreg::get_default_lmdb_folder(nettype);
 
     cout << "Blockchain path: " << blockchain_path << '\n';
+
+    cout << "Monero Version: " << MONERO_VERSION_FULL << endl;
 
     cout << "Initializaing MicroCore\n";
 
