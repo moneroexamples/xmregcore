@@ -1,5 +1,5 @@
 
-macro(add_om_test _TEST_NAME)
+macro(add_test_target _TEST_NAME)
 
     add_executable(${_TEST_NAME}_tests
             ${_TEST_NAME}_tests.cpp
@@ -17,9 +17,24 @@ macro(add_om_test _TEST_NAME)
 
 endmacro()
 
+macro(add_cov_target _TEST_NAME)
+
+    SETUP_TARGET_FOR_COVERAGE_GCOVR_HTML(
+        NAME ${_TEST_NAME}_cov
+        EXECUTABLE ${_TEST_NAME}_tests
+        DEPENDENCIES ${_TEST_NAME}_tests)
+
+endmacro()
+
 resource_dir("res")
 
 
-add_om_test(universalidentifier)
-add_om_test(account)
-add_om_test(tools)
+add_test_target(universalidentifier)
+add_test_target(account)
+add_test_target(tools)
+
+add_cov_target(universalidentifier)
+add_cov_target(account)
+add_cov_target(tools)
+
+

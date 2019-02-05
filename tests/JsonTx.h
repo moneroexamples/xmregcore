@@ -69,12 +69,13 @@ public:
     json jtx;
 
     transaction tx;
-    crypto::hash tx_hash {0};                                                    \
+    crypto::hash tx_hash {0};                                                 
     crypto::hash tx_prefix_hash {0};
     crypto::public_key tx_pub_key;
     crypto::hash payment_id {0};
     crypto::hash8 payment_id8 {0};
     crypto::hash8 payment_id8e {0};
+    uint64_t fee {0};
 
     string jpath;
     network_type ntype;

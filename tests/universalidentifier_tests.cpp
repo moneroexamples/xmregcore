@@ -137,6 +137,7 @@ TEST_P(ModularIdentifierTest, OutputsRingCT)
 }
 
 
+
 TEST_P(ModularIdentifierTest, OutputsRingCTCoinbaseTx)
 {
     string tx_hash_str = GetParam();
@@ -221,6 +222,56 @@ TEST_P(ModularIdentifierTest, IntegratedPaymentID)
                 == jtx->payment_id8);
 }
 
+TEST_P(ModularIdentifierTest, InputWithKnownOutputs)
+{
+    string tx_hash_str = GetParam();
+
+    auto jtx = construct_jsontx(tx_hash_str);
+
+    ASSERT_TRUE(jtx);
+
+    // make vector of known outputs
+    
+    Input::known_outputs_t known_outputs;
+    uint64_t expected_total {};
+
+    // first add real public keys
+    for (auto&& input: jtx->sender.inputs)
+    {
+        known_outputs[input.out_pub_key] = input.amount;
+        expected_total += input.amount;
+    }
+
+
+    // now add some random ones
+    
+    for (size_t i = 0; i < 20; ++i)
+    {
+         auto rand_pk = crypto::rand<public_key>();
+         known_outputs[rand_pk] = 4353534534; // some amount
+    }
+
+    MockMicroCore mcore;
+
+    ADD_MOCKS(mcore);
+    
+    auto identifier = make_identifier(jtx->tx,
+          make_unique<Input>(
+                         &jtx->sender.address,
+                         &jtx->sender.viewkey,
+                         &known_outputs,
+                         &mcore));
+
+    
+    identifier.identify();
+
+    
+    ASSERT_TRUE(identifier.get<0>()->get()
+                == jtx->sender.inputs);
+
+    ASSERT_EQ(identifier.get<0>()->get_total(),
+              expected_total);
+}
 
 TEST_P(ModularIdentifierTest, GuessInputRingCT)
 {

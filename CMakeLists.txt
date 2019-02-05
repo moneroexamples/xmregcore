@@ -33,6 +33,14 @@ set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "${MONERO_BUILD_DIR}"
 
 include(MyUtils)
 
+include(CodeCoverage)
+APPEND_COVERAGE_COMPILER_FLAGS()
+set(COVERAGE_EXCLUDES
+       '${CMAKE_SOURCE_DIR}/ext/*'
+       '${MONERO_SOURCE_DIR}/*'
+       '${CMAKE_SOURCE_DIR}/tests/*')
+
+
 find_package(Monero)
 
 # find boost

@@ -115,6 +115,7 @@ void
 JsonTx::init()
 {
     ntype = cryptonote::network_type {jtx["nettype"]};
+    fee = jtx["fee"];
 
     if (jtx.count("payment_id"))
     {
@@ -132,8 +133,8 @@ JsonTx::init()
         parse_str_secret_key(jtx["sender"]["spendkey"], sender.spendkey);
 
         // actuall amount spent accounting fee
-        sender.amount = jtx["sender"]["total_recieved"].get<uint64_t>()
-                - jtx["sender"]["total_spent"].get<uint64_t>()
+        sender.amount = jtx["sender"]["total_spent"].get<uint64_t>()
+                - jtx["sender"]["total_recieved"].get<uint64_t>()
                 + jtx["fee"].get<uint64_t>();
 
         sender.change = jtx["sender"]["total_recieved"];
