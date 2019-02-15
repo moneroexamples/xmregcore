@@ -61,7 +61,13 @@ Output::identify(transaction const& tx,
     if (!generate_key_derivation(tx_pub_key,
                                  *get_viewkey(), derivation))
     {
-        throw std::runtime_error("generate_key_derivation failed");
+        static_assert(sizeof(derivation) == sizeof(rct::key),
+                "Mismatched sizes of key_derivation and rct::key");
+
+        // use identity derivation instead
+        // solution based on that found in wallet2.cpp in monero
+        // this will cause the tx output to be effectively skipped
+        memcpy(&derivation, rct::identity().bytes, sizeof(derivation));
     }
 
     // since introduction of subaddresses, a tx can
@@ -80,7 +86,15 @@ Output::identify(transaction const& tx,
                                          *get_viewkey(),
                                          additional_derivations[i]))
             {
-                throw std::runtime_error("additional generate_key_derivation failed");
+                static_assert(sizeof(derivation) == sizeof(rct::key),
+                        "Mismatched sizes of key_derivation and rct::key");
+
+                // use identity derivation instead
+                // solution based on that found in wallet2.cpp in monero
+                // this will cause the tx output to be effectively skipped
+                memcpy(&additional_derivations[i],
+                       rct::identity().bytes,
+                       sizeof(additional_derivations[i]));
             }
         }
     }
