@@ -26,7 +26,7 @@ class AbstractCore
     virtual void 
     get_output_key(uint64_t amount,
                    vector<uint64_t> const& absolute_offsets,
-                   vector<cryptonote::output_data_t>& outputs) const = 0;
+                   vector<cryptonote::output_data_t>& outputs) /*const*/ = 0;
 
     
     virtual void
@@ -104,11 +104,11 @@ public:
     get_output_key(uint64_t amount,
                    vector<uint64_t> const& absolute_offsets,
                    vector<cryptonote::output_data_t>& outputs) 
-                    const override;
+                    /*const*/ override;
 
     virtual output_data_t
     get_output_key(uint64_t amount,
-                   uint64_t global_amount_index) const; 
+                   uint64_t global_amount_index) /*const*/; 
 
     virtual bool
     get_transactions(
