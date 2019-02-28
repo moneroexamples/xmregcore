@@ -75,6 +75,13 @@ public:
     crypto::hash payment_id {0};
     crypto::hash8 payment_id8 {0};
     crypto::hash8 payment_id8e {0};
+    
+    // starting from monero v0.14.0.0,
+    // txs can have dummy encrypted payments id
+    // you know if they are dummy, if after decryption
+    // they are null
+    bool is_payment_id8_real {false};
+
     uint64_t fee {0};
 
     string jpath;
@@ -95,6 +102,7 @@ public:
             uint64_t const& amount,
             vector<uint64_t> const& offsets,
             vector<tx_out_index>& indices) const;
+
 
     // will use data from the json file
     // to set tx. Used for mocking this operation

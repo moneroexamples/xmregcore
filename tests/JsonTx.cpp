@@ -120,8 +120,21 @@ JsonTx::init()
     if (jtx.count("payment_id"))
     {
         hex_to_pod(jtx["payment_id"], payment_id);
+    }
+
+
+    if (jtx.count("payment_id8"))
+    {
         hex_to_pod(jtx["payment_id8"], payment_id8);
         hex_to_pod(jtx["payment_id8e"], payment_id8e);
+        cout << "jtx[\"payment_id8e\"] "<< jtx["tx_hash"] 
+        << ", " << jtx["payment_id8e"] << endl;
+    }
+
+    
+    if (jtx.count("is_payment_id8_real"))
+    {
+        is_payment_id8_real = jtx["is_payment_id8_real"];
     }
 
     if (jtx.count("sender"))

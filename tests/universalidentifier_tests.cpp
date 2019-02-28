@@ -110,7 +110,9 @@ INSTANTIATE_TEST_CASE_P(
         "ae8f3ad29a40e02dff6a3267c769f08c0af3dc8858683c90ce3ef90212cb7e4b"s,
         "140807b970e52b7c633d7ca0ba5be603922aa7a2a1213bdd16d3c1a531402bf6"s,
         "a7a4e3bdb305b97c43034440b0bc5125c23b24d0730189261151c0aa3f2a05fc"s,
-        "c06df274acc273fbce0666b2c8846ac6925a1931fb61e3020b7cc5410d4646b1"s
+        "c06df274acc273fbce0666b2c8846ac6925a1931fb61e3020b7cc5410d4646b1"s,
+        "d89f32f1434b6a668cbbc5c55cb1c0c64e41fccb89f6b1eef210fefdacbdd89f"s,
+        "bd461b938c3c8c8e4d9909852221d5c37350ade05e99ef836d6ccb628f6a5a0e"s
         ));
 
 TEST_P(ModularIdentifierTest, OutputsRingCT)
@@ -214,12 +216,19 @@ TEST_P(ModularIdentifierTest, IntegratedPaymentID)
                          &jtx->recipients[0].viewkey));
 
    identifier.identify();
+   
+   //cout << "decrypted: " << pod_to_hex(identifier.get<0>()->get()) 
+   //    << ", " << pod_to_hex(jtx->payment_id8e)  << endl;
+
 
    EXPECT_TRUE(identifier.get<0>()->get()
                 == jtx->payment_id8e);
 
    EXPECT_TRUE(identifier.get<0>()->raw()
                 == jtx->payment_id8);
+   
+   //cout << "row: " << pod_to_hex(identifier.get<0>()->raw()) 
+   //    << ", " << pod_to_hex(jtx->payment_id8) << endl;
 }
 
 TEST_P(ModularIdentifierTest, InputWithKnownOutputs)
