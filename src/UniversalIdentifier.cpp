@@ -176,17 +176,13 @@ Output::identify(transaction const& tx,
                 // as mixins
 
                 rtc_outpk = tx.rct_signatures.outPk[i].mask;
-                rtc_mask = tx.rct_signatures.ecdhInfo[i].mask;
                 rtc_amount = tx.rct_signatures.ecdhInfo[i].amount;
-
-                rct::key mask =  tx.rct_signatures
-                        .ecdhInfo[i].mask;
 
                 auto r = decode_ringct(tx.rct_signatures,
                                        !with_additional ? derivation
                                              : additional_derivations[i],
                                        i,
-                                       mask,
+                                       rtc_mask,
                                        rct_amount_val);
 
                 if (!r)
@@ -231,7 +227,7 @@ Output::decode_ringct(rct::rctSig const& rv,
     {
         crypto::secret_key scalar1;
 
-        crypto::derivation_to_scalar(derivation, i, scalar1);
+        hw::get_device("default").derivation_to_scalar(derivation, i, scalar1);
 
         switch (rv.type)
         {
