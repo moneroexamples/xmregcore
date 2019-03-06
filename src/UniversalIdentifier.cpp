@@ -122,6 +122,12 @@ Output::identify(transaction const& tx,
                           get_address()->address.m_spend_public_key,
                           generated_tx_pubkey);
 
+        // this derivation is going to be saved 
+        // it can be one of addiitnal derivations
+        // if we are dealing with multiouput tx
+        // which cointains subaddress
+        auto derivation_to_save = derivation;
+
 //        cout << pod_to_hex(derivation) << ", " << i << ", "
 //             << pod_to_hex(get_address()->address.m_spend_public_key) << ", "
 //             << pod_to_hex(txout_key.key) << " == "
@@ -176,14 +182,21 @@ Output::identify(transaction const& tx,
                 // as mixins
 
                 rtc_outpk = tx.rct_signatures.outPk[i].mask;
+                rtc_mask = tx.rct_signatures.ecdhInfo[i].mask;
                 rtc_amount = tx.rct_signatures.ecdhInfo[i].amount;
 
+                rct::key mask =  tx.rct_signatures.ecdhInfo[i].mask;
+        
+                derivation_to_save = !with_additional ? derivation
+                                             : additional_derivations[i];
+
                 auto r = decode_ringct(tx.rct_signatures,
-                                       !with_additional ? derivation
-                                             : additional_derivations[i],
+                                       derivation_to_save,
                                        i,
-                                       rtc_mask,
+                                       mask,
                                        rct_amount_val);
+
+                (void) mask;
 
                 if (!r)
                 {
@@ -203,7 +216,8 @@ Output::identify(transaction const& tx,
 
             identified_outputs.emplace_back(
                     info{
-                        txout_key.key, amount, i, derivation,
+                        generated_tx_pubkey, amount, i, 
+                        derivation_to_save,
                         rtc_outpk, rtc_mask, rtc_amount
                     });
 
@@ -566,6 +580,8 @@ void RealInput::identify(transaction const& tx,
                         make_unique<Output>(get_address(), get_viewkey()));
 
             identifier.identify();
+
+            //cout << "mixin tx hash: " << get_transaction_hash(mixin_tx) << '\n';
 
             for (auto const& found_output: identifier.get<Output>()->get())
             {
