@@ -173,6 +173,12 @@ MicroCore::get_tx_block_height(crypto::hash const& tx_hash) const
     return core_storage.get_db().get_tx_block_height(tx_hash);
 }
 
+uint64_t
+MicroCore::get_current_hard_fork_version() const
+{
+    return core_storage.get_current_hard_fork_version();
+}
+
 std::vector<uint64_t>
 MicroCore::get_tx_amount_output_indices(uint64_t tx_id) const
 {

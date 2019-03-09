@@ -145,6 +145,9 @@ public:
     virtual uint64_t
     get_current_blockchain_height() const;
 
+    virtual uint64_t
+    get_current_hard_fork_version() const;
+
     virtual void
     get_output_tx_and_index(
             uint64_t amount,
