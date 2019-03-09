@@ -174,9 +174,9 @@ MicroCore::get_tx_block_height(crypto::hash const& tx_hash) const
 }
 
 uint64_t
-MicroCore::get_current_hard_fork_version() const
+MicroCore::get_hard_fork_version(uint64_t height) const
 {
-    return core_storage.get_current_hard_fork_version();
+    return core_storage.get_hard_fork_version(height);
 }
 
 std::vector<uint64_t>
