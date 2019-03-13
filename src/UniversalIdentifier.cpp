@@ -307,7 +307,22 @@ void Input::identify(transaction const& tx,
          // match to the offests
          vector<output_data_t> mixin_outputs;
 
+         // before we procced to fetch the outputs from lmdb
+         // check if we are not trying to get the outputs
+         // with non-existing offsets
+
+         auto num_outputs = mcore->get_num_outputs(in_key.amount);
+
+         if (absolute_offsets.back() >= num_outputs)
+         {
+             //cerr << "skipping offset" << endl;
+             // we try to get output with offset 
+             // greater what is storred in lmdb
+             continue;
+         }
+
          // this can THROW if no outputs are found
+         // but previous check should prevent this
          mcore->get_output_key(in_key.amount,
                                absolute_offsets,
                                mixin_outputs);

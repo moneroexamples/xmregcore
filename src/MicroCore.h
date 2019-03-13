@@ -22,6 +22,9 @@ class AbstractCore
     // in the UniveralIdentifier. Thus we are going to make
     // the identifier relay on the AbstractCore, instead of the
     // concrete implementation defined below.     
+    
+    virtual uint64_t
+    get_num_outputs(uint64_t amount) const = 0;
 
     virtual void 
     get_output_key(uint64_t amount,
@@ -99,6 +102,9 @@ public:
 
     virtual network_type
     get_nettype() const;
+    
+    virtual uint64_t
+    get_num_outputs(uint64_t amount) const override;
 
     virtual void
     get_output_key(uint64_t amount,

@@ -118,6 +118,13 @@ MicroCore::get_output_key(uint64_t amount,
                             absolute_offsets, outputs);
 }
 
+uint64_t
+MicroCore::get_num_outputs(uint64_t amount) const
+{
+    return core_storage.get_db().
+            get_num_outputs(amount);
+}
+
 
 output_data_t
 MicroCore::get_output_key(uint64_t amount,

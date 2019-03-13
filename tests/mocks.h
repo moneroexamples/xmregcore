@@ -76,6 +76,8 @@ public:
                        bool(crypto::hash const& tx_hash,
                             transaction& tx));
 
+    MOCK_CONST_METHOD1(get_num_outputs, uint64_t(uint64_t));
+
     MOCK_METHOD3(get_output_key,
                     void(uint64_t amount,
                          vector<uint64_t> const& absolute_offsets,

@@ -11,15 +11,17 @@
     EXPECT_CALL(mcore, get_output_tx_and_index(_, _, _)) \
             .WillRepeatedly( \
                 Invoke(&*jtx, &JsonTx::get_output_tx_and_index)); \
-\
+    \
     EXPECT_CALL(mcore, get_tx(_, _)) \
             .WillRepeatedly( \
                 Invoke(&*jtx, &JsonTx::get_tx)); \
-        \
+    \
     EXPECT_CALL(mcore, get_output_key(_, _, _)) \
             .WillRepeatedly( \
-                Invoke(&*jtx, &JsonTx::get_output_key));
-
+                Invoke(&*jtx, &JsonTx::get_output_key));\
+    \
+    EXPECT_CALL(mcore, get_num_outputs(_)) \
+            .WillRepeatedly(Return(1e10));
 
 namespace
 {
