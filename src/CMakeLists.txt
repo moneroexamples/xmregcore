@@ -12,6 +12,34 @@ set(SOURCE_FILES
         Account.h
         Account.cpp)
 
+# find boost
+find_package(Boost COMPONENTS
+        system
+        filesystem
+        thread
+        date_time
+        chrono
+        regex
+        serialization
+        program_options
+        REQUIRED)
+
+find_package(HIDAPI)
+
+set(LIBRARIES
+        Monero::Monero
+        ${Boost_LIBRARIES}
+        ${HIDAPI_LIBRARIES}
+        sodium
+        pthread
+        unbound
+        curl        
+        ssl
+        crypto
+        dl
+        atomic
+        unwind)
+
 # make static library called libmyxrm
 # that we are going to link to
 # in the root CMakeLists.txt file
@@ -19,5 +47,7 @@ add_library(myxrmcore
             STATIC
             ${SOURCE_FILES})
 
-# include monero headers
-target_include_monero_directories(myxrmcore)
+target_link_libraries(myxrmcore
+    PUBLIC ${LIBRARIES})
+
+

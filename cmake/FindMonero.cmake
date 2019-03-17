@@ -33,6 +33,25 @@
 #                blockchain_db;ringct;wallet;cncrypto;easylogging;version;checkpoints;
 #                ringct_basic)
 
+
+if (NOT MONERO_DIR)
+    set(MONERO_DIR ~/monero)
+endif()
+
+message(STATUS MONERO_DIR ": ${MONERO_DIR}")
+
+set(MONERO_SOURCE_DIR ${MONERO_DIR}
+        CACHE PATH "Path to the root directory for Monero")
+
+# set location of monero build tree
+set(MONERO_BUILD_DIR ${MONERO_SOURCE_DIR}/build/release/
+        CACHE PATH "Path to the build directory for Monero")
+
+
+set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "${MONERO_BUILD_DIR}"
+        CACHE PATH "Add Monero directory for library searching")
+
+
 set(LIBS  cryptonote_core
           blockchain_db
           cryptonote_protocol
@@ -79,10 +98,10 @@ foreach (l ${LIBS})
 
 	message(STATUS FindMonero " Xmr_${L}_LIBRARIES ${Xmr_${L}_LIBRARY}")
 
-        add_library(${l} STATIC IMPORTED GLOBAL)
+    add_library(${l} STATIC IMPORTED)
 	set_property(TARGET ${l} PROPERTY IMPORTED_LOCATION ${Xmr_${L}_LIBRARIES})
 
-        set(Monero_LIBRARIES ${Monero_LIBRARIES} ${l} CACHE INTERNAL "Monero LIBRARIES")
+    set(Monero_LIBRARIES ${Monero_LIBRARIES} ${l} CACHE INTERNAL "Monero LIBRARIES")
 
 endforeach()
 
@@ -91,15 +110,29 @@ message("FOUND Monero_LIBRARIES: ${Monero_LIBRARIES}")
 
 message(STATUS ${MONERO_SOURCE_DIR}/build)
 
-macro(target_include_monero_directories target_name)
+#macro(target_include_monero_directories target_name)
 
-    target_include_directories(${target_name}
-        PRIVATE
-        ${MONERO_SOURCE_DIR}/src
-        ${MONERO_SOURCE_DIR}/external
-        ${MONERO_SOURCE_DIR}/build
-        ${MONERO_SOURCE_DIR}/external/easylogging++
-        ${MONERO_SOURCE_DIR}/contrib/epee/include
-        ${MONERO_SOURCE_DIR}/external/db_drivers/liblmdb)
+    #target_include_directories(${target_name}
+        #PRIVATE
+        #${MONERO_SOURCE_DIR}/src
+        #${MONERO_SOURCE_DIR}/external
+        #${MONERO_SOURCE_DIR}/build
+        #${MONERO_SOURCE_DIR}/external/easylogging++
+        #${MONERO_SOURCE_DIR}/contrib/epee/include
+        #${MONERO_SOURCE_DIR}/external/db_drivers/liblmdb)
 
-endmacro(target_include_monero_directories)
+#endmacro(target_include_monero_directories)
+
+
+add_library(Monero::Monero INTERFACE IMPORTED GLOBAL)
+
+target_include_directories(Monero::Monero INTERFACE        
+    ${MONERO_SOURCE_DIR}/src
+    ${MONERO_SOURCE_DIR}/external
+    ${MONERO_SOURCE_DIR}/build
+    ${MONERO_SOURCE_DIR}/external/easylogging++
+    ${MONERO_SOURCE_DIR}/contrib/epee/include
+    ${MONERO_SOURCE_DIR}/external/db_drivers/liblmdb)
+
+target_link_libraries(Monero::Monero INTERFACE
+    ${Monero_LIBRARIES})
