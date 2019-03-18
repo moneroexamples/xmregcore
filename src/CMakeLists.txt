@@ -51,3 +51,4 @@ target_link_libraries(myxrmcore
     PUBLIC ${LIBRARIES})
 
 add_library(XMREG::core ALIAS myxrmcore)
+
