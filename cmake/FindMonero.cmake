@@ -126,13 +126,19 @@ message(STATUS ${MONERO_SOURCE_DIR}/build)
 
 add_library(Monero::Monero INTERFACE IMPORTED GLOBAL)
 
-target_include_directories(Monero::Monero INTERFACE        
-    ${MONERO_SOURCE_DIR}/src
-    ${MONERO_SOURCE_DIR}/external
-    ${MONERO_SOURCE_DIR}/build
-    ${MONERO_SOURCE_DIR}/external/easylogging++
-    ${MONERO_SOURCE_DIR}/contrib/epee/include
-    ${MONERO_SOURCE_DIR}/external/db_drivers/liblmdb)
+# Requires to new cmake
+#target_include_directories(Monero::Monero INTERFACE        
+    #${MONERO_SOURCE_DIR}/src
+    #${MONERO_SOURCE_DIR}/external
+    #${MONERO_SOURCE_DIR}/build
+    #${MONERO_SOURCE_DIR}/external/easylogging++
+    #${MONERO_SOURCE_DIR}/contrib/epee/include
+    #${MONERO_SOURCE_DIR}/external/db_drivers/liblmdb)
+
+set_target_properties(Monero::Monero PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES 
+            "${MONERO_SOURCE_DIR}/src;${MONERO_SOURCE_DIR}/external;${MONERO_SOURCE_DIR}/build;${MONERO_SOURCE_DIR}/external/easylogging++;${MONERO_SOURCE_DIR}/contrib/epee/include;${MONERO_SOURCE_DIR}/external/db_drivers/liblmdb")
+
 
 target_link_libraries(Monero::Monero INTERFACE
     ${Monero_LIBRARIES})
