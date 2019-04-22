@@ -65,7 +65,25 @@ TEST(ACCOUNT, FullConstructionFromStrings)
     EXPECT_EQ(acc->sk(), jtx->sender.spendkey);
 }
 
-TEST(ACCOUNT, NoSpendandViewKeiesConstruction)
+TEST(ACCOUNT, OnlyAddressAndViewkeyFromStrings)
+{
+    auto jtx = construct_jsontx("ddff95211b53c194a16c2b8f37ae44b643b8bd46b4cb402af961ecabeb8417b2");
+
+    ASSERT_TRUE(jtx);
+
+    auto const& sender = jtx->jtx["sender"];
+
+    auto acc = account_factory(sender["address"],
+                               sender["viewkey"]);
+
+    EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::PRIMARY);
+
+    EXPECT_EQ(acc->nt(), jtx->ntype);
+    EXPECT_EQ(acc->ai().address, jtx->sender.address.address);
+    EXPECT_EQ(acc->vk(), jtx->sender.viewkey);
+}
+
+TEST(ACCOUNT, NoSpendandViewKeysConstruction)
 {
     auto jtx = construct_jsontx("ddff95211b53c194a16c2b8f37ae44b643b8bd46b4cb402af961ecabeb8417b2");
 
