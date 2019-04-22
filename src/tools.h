@@ -6,8 +6,6 @@
 
 #include "monero_headers.h"
 
-#include "../ext/json.hpp"
-
 #include <boost/optional.hpp>
 
 #include <string>
