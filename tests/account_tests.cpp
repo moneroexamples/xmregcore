@@ -132,13 +132,24 @@ TEST(ACCOUNT, FullConstructionSubAddress)
     EXPECT_TRUE(acc);
 }
 
-TEST(ACCOUNT, FailedConstructionFromString)
+TEST(ACCOUNT, FailedConstructionFromString1)
 {
     string const wrong_address = "fgdgsfdfgs";
     string const wrong_viewkey = "fgdgsfdfgs";
     string const wrong_spendkey = "fgdgsfdfgs";
 
     auto acc = account_factory(wrong_address, wrong_viewkey, wrong_spendkey);
+
+    EXPECT_EQ(acc, nullptr);
+}
+
+TEST(ACCOUNT, FailedConstructionFromString2)
+{
+    // last  letter missing "V"
+    string const wrong_address = "56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbP";
+    string const wrong_viewkey = "b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09";
+
+    auto acc = account_factory(wrong_address, wrong_viewkey);
 
     EXPECT_EQ(acc, nullptr);
 }

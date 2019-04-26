@@ -150,6 +150,11 @@ account_factory(string const& addr_str,
 {
     auto&& net_and_addr_type = nettype_based_on_address(addr_str);
 
+    if (net_and_addr_type.first == network_type::UNDEFINED)
+    {
+        return nullptr;
+    }
+
     if (net_and_addr_type.second == address_type::SUBADDRESS)
         return make_unique<SubaddressAccount>(net_and_addr_type.first,
                                            addr_str,
@@ -199,9 +204,10 @@ Account::ai_to_str(address_parse_info const& addr_info,
                    network_type net_type)
 {
     return get_account_address_as_str(
-                net_type,
-                addr_info.is_subaddress,
-                addr_info.address);
+            net_type,
+            addr_info.is_subaddress,
+            addr_info.address);
+
 }
 
 
