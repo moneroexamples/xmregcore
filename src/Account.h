@@ -98,6 +98,7 @@ protected:
     address_parse_info addr_info;
     boost::optional<secret_key> viewkey;
     boost::optional<secret_key> spendkey;
+    boost::optional<subaddress_index> subaddr_idx;
 };
 
 
@@ -186,6 +187,7 @@ account_factory(network_type net_type,
 
     return nullptr;
 }
+
 
 inline secret_key
 Account::parse_secret_key(string const& sk)
