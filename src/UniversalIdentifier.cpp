@@ -98,6 +98,11 @@ Output::identify(transaction const& tx,
             }
         }
     }
+		
+	auto& hwdev = hw::get_device("default");
+
+	auto const& pub_spend_key 
+		= get_address()->address.m_spend_public_key;
 
     for (auto i = 0u; i < tx.vout.size(); ++i)
     {
@@ -112,15 +117,18 @@ Output::identify(transaction const& tx,
 
         uint64_t amount = tx.vout[i].amount;
 
-        // get the tx output public key
-        // that normally would be generated for us,
-        // if someone had sent us some xmr.
-        public_key generated_tx_pubkey;
+		// calculate public spendkey using derivation
+		// and tx output key. If this is our output
+		// the caulcualted public spendkey should match
+ 		// our actuall public spend key avaiable in our
+	    // public monero address. Primary address is 
+		// a special case of subaddress. 
 
-        derive_public_key(derivation,
-                          i,
-                          get_address()->address.m_spend_public_key,
-                          generated_tx_pubkey);
+        crypto::public_key subaddress_spendkey;
+
+        hwdev.derive_subaddress_public_key(
+					txout_key.key, derivation, i, 
+					subaddress_spendkey);
 
         // this derivation is going to be saved 
         // it can be one of addiitnal derivations
@@ -128,26 +136,21 @@ Output::identify(transaction const& tx,
         // which cointains subaddress
         auto derivation_to_save = derivation;
 
-//        cout << pod_to_hex(derivation) << ", " << i << ", "
-//             << pod_to_hex(get_address()->address.m_spend_public_key) << ", "
-//             << pod_to_hex(txout_key.key) << " == "
-//             << pod_to_hex(generated_tx_pubkey) << '\n'  << '\n';
-
-        // check if generated public key matches the current output's key
-        bool mine_output = (txout_key.key == generated_tx_pubkey);
+	    bool mine_output = (pub_spend_key == subaddress_spendkey);
 
         auto with_additional = false;
 
         if (!mine_output && !additional_tx_pub_keys.empty())
         {
             // check for output using additional tx public keys
-            derive_public_key(additional_derivations[i],
-                              i,
-                              get_address()->address.m_spend_public_key,
-                              generated_tx_pubkey);
+         	crypto::public_key subaddress_spendkey;
 
-
-            mine_output = (txout_key.key == generated_tx_pubkey);
+	    	hwdev.derive_subaddress_public_key(
+						txout_key.key, additional_derivations[i], 
+						i, 
+						subaddress_spendkey);
+	    
+			mine_output = (pub_spend_key == subaddress_spendkey);
 
             with_additional = true;
         }
@@ -216,7 +219,7 @@ Output::identify(transaction const& tx,
 
             identified_outputs.emplace_back(
                     info{
-                        generated_tx_pubkey, amount, i, 
+                        txout_key.key, amount, i, 
                         derivation_to_save,
                         rtc_outpk, rtc_mask, rtc_amount
                     });

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MicroCore.h"
+#include "Account.h"
 
 #include <tuple>
 #include <utility>
@@ -37,6 +38,12 @@ public:
         : address_info {_address}, viewkey {_viewkey}
    {}
 
+   BaseIdentifier(Account* _acc)
+        : BaseIdentifier(&_acc->ai(), &*_acc->vk())
+   {
+       acc = _acc; 
+   }
+
     virtual void identify(transaction const& tx,
                           public_key const& tx_pub_key,
                           vector<public_key> const& additional_tx_pub_keys
@@ -52,6 +59,7 @@ protected:
     address_parse_info const* address_info {nullptr};
     secret_key const* viewkey {nullptr};
     uint64_t total_xmr {0};
+    Account* acc {nullptr};
 };
 
 /**
@@ -62,10 +70,12 @@ class Output : public BaseIdentifier
 {
 public:
 
-    Output(address_parse_info const* _address,
-           secret_key const* _viewkey)
-        : BaseIdentifier(_address, _viewkey)
-    {}
+    //Output(address_parse_info const* _address,
+           //secret_key const* _viewkey)
+        //: BaseIdentifier(_address, _viewkey)
+    //{}
+    
+    using BaseIdentifier::BaseIdentifier;
 
     void identify(transaction const& tx,
                   public_key const& tx_pub_key,
@@ -76,8 +86,6 @@ public:
     {
         return identified_outputs;
     }
-
-
 
 
     bool

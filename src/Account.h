@@ -64,12 +64,49 @@ public:
 
     inline auto const& vk() const
     {return viewkey;}
-
+    
     inline auto vk2str() const
     {return viewkey ? pod_to_hex(*viewkey) : ""s;}
 
+    inline auto const& pvk() const
+    {return addr_info.address.m_view_public_key;}
+    
+    inline auto pvk2str() const
+    {return pod_to_hex(pvk());};
+    
+	inline auto const& psk() const
+    {return addr_info.address.m_spend_public_key;}
+    
+    inline auto psk2str() const
+    {return pod_to_hex(psk());};
+
     inline auto const& sk() const
     {return spendkey;}
+
+    inline auto index() const
+    {return subaddr_idx;}
+
+    inline auto const& keys()
+    {
+        if (!acc_keys)
+        {
+            assert(bool{viewkey});
+
+            account_keys akeys;
+            akeys.m_account_address = ai().address;
+            akeys.m_view_secret_key = *viewkey;
+
+            if (spendkey)
+                akeys.m_spend_secret_key = *spendkey;
+
+            acc_keys = std::move(akeys);
+        }
+
+        return acc_keys;
+    }
+    
+    inline void set_index(subaddress_index idx) 
+    {subaddr_idx = std::move(idx);}
 
     inline auto sk2str() const
     {return spendkey ? pod_to_hex(*spendkey) : ""s;}
@@ -95,10 +132,11 @@ public:
 protected:
 
     network_type nettype {network_type::STAGENET};
-    address_parse_info addr_info;
+    address_parse_info addr_info {};
     boost::optional<secret_key> viewkey;
     boost::optional<secret_key> spendkey;
     boost::optional<subaddress_index> subaddr_idx;
+    boost::optional<account_keys> acc_keys;
 };
 
 
@@ -117,22 +155,73 @@ public:
     {return NONE;}
 };
 
-class PrimaryAccount : public Account
-{
-public:
-    using Account::Account;
-
-    virtual ADDRESS_TYPE type() const override
-    {return PRIMARY;}
-};
 
 class SubaddressAccount : public Account
 {
 public:
-    using Account::Account;
 
+    using Account::Account;
+    
     virtual inline ADDRESS_TYPE type() const override
     {return SUBADDRESS;}
+};
+
+class PrimaryAccount : public Account
+{
+public:
+
+    using subaddr_map_t =  std::unordered_map<
+                    public_key,
+                    subaddress_index>;
+
+    template <typename... T>
+    PrimaryAccount(T&&... args)
+    : Account(std::forward<T>(args)...)
+    {
+        subaddr_idx = subaddress_index {0, 0};
+		
+		// register the PrimaryAccount into
+		// subaddresses map as special case
+		// for uniform handling of all addresses
+		subaddresses[psk()] = *subaddr_idx;
+    }
+
+    virtual ADDRESS_TYPE type() const override
+    {return PRIMARY;}
+    
+    std::unique_ptr<SubaddressAccount>
+    gen_subaddress(subaddress_index idx);
+    
+    std::unique_ptr<SubaddressAccount>
+    gen_subaddress(uint32_t acc_id, uint32_t addr_id)
+    {
+        return gen_subaddress({acc_id, addr_id});
+    }
+
+    /**
+     * Unlike above, it does not produce SubaddressAcount 
+     * It just calcualtes public spend key for a subaddress
+     * with given index and saves it in subaddresses map
+     */
+    subaddr_map_t::const_iterator 
+    add_subaddress_index(uint32_t acc_id, uint32_t addr_id);
+
+    /**
+     * Generates all set public spend keys for 
+     * 50 accounts x 200 subaddresess into 
+     * subaddresses map
+     */
+    void 
+    populate_subaddress_indices(uint32_t last_acc_id = 50);
+
+	auto begin() { return subaddresses.begin(); }
+    auto begin() const { return subaddresses.cbegin(); }
+	
+	auto end() { return subaddresses.end(); }
+    auto end() const { return subaddresses.cend(); }
+
+protected:
+    subaddr_map_t subaddresses; 
 };
 
 // account_factory functions are helper functions
@@ -188,6 +277,23 @@ account_factory(network_type net_type,
     return nullptr;
 }
 
+template <typename... T>
+static unique_ptr<Account>
+account_factory(subaddress_index idx, T&&... args)
+{
+    auto acc = account_factory(std::forward<T>(args)...); 
+
+    if (!acc)
+        return nullptr;
+
+    if (acc->is_subaddress())
+        acc->set_index(std::move(idx));
+
+    return acc;
+}
+
+ unique_ptr<SubaddressAccount> 
+ create(PrimaryAccount const& acc, subaddress_index idx);
 
 inline secret_key
 Account::parse_secret_key(string const& sk)
