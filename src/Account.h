@@ -155,7 +155,6 @@ public:
     {return NONE;}
 };
 
-
 class SubaddressAccount : public Account
 {
 public:
@@ -165,6 +164,7 @@ public:
     virtual inline ADDRESS_TYPE type() const override
     {return SUBADDRESS;}
 };
+
 
 class PrimaryAccount : public Account
 {
@@ -231,7 +231,7 @@ public:
 	auto end() { return subaddresses.end(); }
     auto end() const { return subaddresses.cend(); }
 
-protected:
+private:
     subaddr_map_t subaddresses; 
 };
 

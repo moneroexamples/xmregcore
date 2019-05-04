@@ -101,29 +101,6 @@ PrimaryAccount::add_subaddress_index(uint32_t acc_id, uint32_t addr_id)
     return it.first;
 }
 
-//void 
-//PrimaryAccount::populate_subaddress_indices(uint32_t last_acc_id)
-//{
-    //auto& device = hw::get_device("default");
-
-    //auto account_keys = *(this->keys());
-
-    //for (uint32_t acc_id {0}; acc_id < last_acc_id; ++acc_id)
-    //{
-        ////auto public_keys = device.get_subaddress_spend_public_keys(
-               ////account_keys, acc_id, 0, 200); 
-        //for (uint32_t addr_id {0}; addr_id < 200; ++addr_id)
-        //{
-            //subaddress_index idx {acc_id, addr_id};
-
-            //auto pub_spendkey = device.get_subaddress_spend_public_key(
-                //account_keys, idx);
-            
-            //subaddresses[pub_spendkey] = idx;
-        //} 
-    //}
-//}
-
 void 
 PrimaryAccount::populate_subaddress_indices(uint32_t last_acc_id)
 {
