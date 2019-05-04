@@ -239,17 +239,18 @@ private:
 // to easly create Account objects through uniqute_ptr
 
 static unique_ptr<Account>
-account_factory()
+make_account()
 {
     return make_unique<EmptyAccount>();
 }
 
 template <typename... T>
 static unique_ptr<Account>
-account_factory(string const& addr_str,
+make_account(string const& addr_str,
                 T&&... args)
 {
-    auto&& net_and_addr_type = nettype_based_on_address(addr_str);
+    auto&& net_and_addr_type 
+        = nettype_based_on_address(addr_str);
 
     if (net_and_addr_type.first == network_type::UNDEFINED)
     {
@@ -257,20 +258,23 @@ account_factory(string const& addr_str,
     }
 
     if (net_and_addr_type.second == address_type::SUBADDRESS)
-        return make_unique<SubaddressAccount>(net_and_addr_type.first,
-                                           addr_str,
-                                           std::forward<T>(args)...);
+        return make_unique<SubaddressAccount>(
+                net_and_addr_type.first,
+                addr_str,
+                std::forward<T>(args)...);
     else if (net_and_addr_type.second == address_type::REGULAR
               || net_and_addr_type.second == address_type::INTEGRATED)
-        return make_unique<PrimaryAccount>(net_and_addr_type.first,
-                                           addr_str,
-                                           std::forward<T>(args)...);
+        return make_unique<PrimaryAccount>(
+                net_and_addr_type.first,
+                addr_str,
+                std::forward<T>(args)...);
+
     return nullptr;
 }
 
 template <typename... T>
 static unique_ptr<Account>
-account_factory(network_type net_type,
+make_account(network_type net_type,
                 address_parse_info const& addr_info,
                 T&&... args)
 {
@@ -279,20 +283,20 @@ account_factory(network_type net_type,
     return nullptr;
 
     if (addr_info.is_subaddress)
-        return make_unique<SubaddressAccount>(net_type, addr_info,
-                                              std::forward<T>(args)...);
+        return make_unique<SubaddressAccount>(
+                net_type, addr_info,
+                std::forward<T>(args)...);
     else
-        return make_unique<PrimaryAccount>(net_type, addr_info,
-                                          std::forward<T>(args)...);
-
-    return nullptr;
+        return make_unique<PrimaryAccount>(
+                net_type, addr_info,
+                std::forward<T>(args)...);
 }
 
 template <typename... T>
 static unique_ptr<Account>
-account_factory(subaddress_index idx, T&&... args)
+make_account(subaddress_index idx, T&&... args)
 {
-    auto acc = account_factory(std::forward<T>(args)...); 
+    auto acc = make_account(std::forward<T>(args)...); 
 
     if (!acc)
         return nullptr;
@@ -301,6 +305,44 @@ account_factory(subaddress_index idx, T&&... args)
         acc->set_index(std::move(idx));
 
     return acc;
+}
+
+template <typename... T>
+static unique_ptr<PrimaryAccount>
+make_primaryaccount(string const& addr_str,
+                    T&&... args)
+{
+    auto&& net_and_addr_type 
+        = nettype_based_on_address(addr_str);
+
+    if (net_and_addr_type.first == network_type::UNDEFINED)
+    {
+        return nullptr;
+    }
+
+    if (net_and_addr_type.second == address_type::REGULAR
+              || net_and_addr_type.second == address_type::INTEGRATED)
+        return make_unique<PrimaryAccount>(
+                net_and_addr_type.first,
+                addr_str,
+                std::forward<T>(args)...);
+
+    return nullptr;
+}
+
+template <typename... T>
+static unique_ptr<Account>
+make_primaryaccount(network_type net_type,
+                    address_parse_info const& addr_info,
+                    T&&... args)
+{
+    if (!crypto::check_key(addr_info.address.m_view_public_key)
+            || !crypto::check_key(addr_info.address.m_spend_public_key))
+    return nullptr;
+
+    return make_unique<PrimaryAccount>(
+                net_type, addr_info,
+                std::forward<T>(args)...);
 }
 
  unique_ptr<SubaddressAccount> 

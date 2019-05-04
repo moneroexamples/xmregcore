@@ -14,7 +14,7 @@ using namespace xmreg;
 
 TEST(ACCOUNT, DefaultConstruction)
 {
-    auto acc = account_factory();
+    auto acc = make_account();
 
     EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::NONE);
     EXPECT_FALSE(*acc);
@@ -26,7 +26,7 @@ TEST(ACCOUNT, FullConstruction)
 
     ASSERT_TRUE(jtx);
 
-    auto acc = account_factory(jtx->ntype,
+    auto acc = make_account(jtx->ntype,
                                jtx->sender.address,
                                jtx->sender.viewkey,
                                jtx->sender.spendkey);
@@ -57,7 +57,7 @@ TEST(ACCOUNT, FullConstructionFromStrings)
 
     auto const& sender = jtx->jtx["sender"];
 
-    auto acc = account_factory(sender["address"],
+    auto acc = make_account(sender["address"],
                                sender["viewkey"],
                                sender["spendkey"]);
 
@@ -77,7 +77,7 @@ TEST(ACCOUNT, OnlyAddressAndViewkeyFromStrings)
 
     auto const& sender = jtx->jtx["sender"];
 
-    auto acc = account_factory(sender["address"],
+    auto acc = make_account(sender["address"],
                                sender["viewkey"]);
 
     EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::PRIMARY);
@@ -95,7 +95,7 @@ TEST(ACCOUNT, NoSpendandViewKeysConstruction)
 
     auto const& sender = jtx->jtx["sender"];
 
-    auto acc = account_factory(sender["address"],
+    auto acc = make_account(sender["address"],
                                sender["viewkey"]);
 
     EXPECT_EQ(acc->nt(), jtx->ntype);
@@ -103,7 +103,7 @@ TEST(ACCOUNT, NoSpendandViewKeysConstruction)
     EXPECT_EQ(acc->vk(), jtx->sender.viewkey);
     EXPECT_FALSE(acc->sk());
 
-    auto acc2 = account_factory(sender["address"]);
+    auto acc2 = make_account(sender["address"]);
 
     EXPECT_EQ(acc2->nt(), jtx->ntype);
     EXPECT_EQ(acc2->ai().address, jtx->sender.address.address);
@@ -119,7 +119,7 @@ TEST(ACCOUNT, FullConstructionSubAddress)
 
     auto const& recipient1 = jtx->recipients[1];
 
-    auto acc = account_factory(jtx->ntype,
+    auto acc = make_account(jtx->ntype,
                                recipient1.address,
                                recipient1.viewkey,
                                recipient1.spendkey);
@@ -144,7 +144,7 @@ TEST(ACCOUNT, FailedConstructionFromString1)
     string const wrong_viewkey = "fgdgsfdfgs";
     string const wrong_spendkey = "fgdgsfdfgs";
 
-    auto acc = account_factory(wrong_address, wrong_viewkey, wrong_spendkey);
+    auto acc = make_account(wrong_address, wrong_viewkey, wrong_spendkey);
 
     EXPECT_EQ(acc, nullptr);
 }
@@ -155,7 +155,7 @@ TEST(ACCOUNT, FailedConstructionFromString2)
     string const wrong_address = "56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbP";
     string const wrong_viewkey = "b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09";
 
-    auto acc = account_factory(wrong_address, wrong_viewkey);
+    auto acc = make_account(wrong_address, wrong_viewkey);
 
     EXPECT_EQ(acc, nullptr);
 }
@@ -182,7 +182,7 @@ TEST(ACCOUNT, FailedConstructionFromNonString)
     wrong_address.address.m_spend_public_key 
         = wrong_address.address.m_view_public_key; 
     
-    auto acc = account_factory(network_type::STAGENET, wrong_address);
+    auto acc = make_account(network_type::STAGENET, wrong_address);
 
     EXPECT_EQ(acc, nullptr);
 }
@@ -210,7 +210,7 @@ TEST(SUBADDRESS, BasicGenerationTest)
                                       !index.is_zero(), subaddres);
 
 
-    auto acc = account_factory(index, subaddr_str);
+    auto acc = make_account(index, subaddr_str);
 
     //cout << i << ": " <<  subaddr_str << '\n';
 
@@ -230,7 +230,7 @@ TEST(SUBADDRESS, UsingGenSubAddress)
     
     auto const& sender = jtx->jtx["sender"];
 
-    auto acc = account_factory(sender["address"],
+    auto acc = make_account(sender["address"],
                                sender["viewkey"]);
 
     ASSERT_FALSE(acc->is_subaddress());
@@ -250,7 +250,7 @@ TEST(SUBADDRESS, UsingGenSubAddress1)
     string spendkey= "df0f5720ae0b69454ca7db35db677272c7c19513cd0dc4147b0e00792a10f406";
     string viewkey = "b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09";
 
-    auto acc = account_factory(address, viewkey, spendkey);
+    auto acc = make_account(address, viewkey, spendkey);
 
     EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::PRIMARY);
     
@@ -292,7 +292,7 @@ TEST(SUBADDRESS, UsingGenSubAddressNoSpendkey)
     string address = "56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV";
     string viewkey = "b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09";
 
-    auto acc = account_factory(address, viewkey);
+    auto acc = make_account(address, viewkey);
 
     EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::PRIMARY);
     
@@ -313,7 +313,7 @@ TEST(SUBADDRESS, UsingGenSubAddressNoViewkey)
     // monerowalletstagenet3
     string address = "56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV";
 
-    auto acc = account_factory(address);
+    auto acc = make_account(address);
 
     EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::PRIMARY);
     
@@ -330,7 +330,7 @@ TEST(SUBADDRESS, AddSubAddressNoSpendkey)
     string address = "56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV";
     string viewkey = "b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09";
 
-    auto acc = account_factory(address, viewkey);
+    auto acc = make_account(address, viewkey);
 
     EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::PRIMARY);
     
@@ -352,12 +352,10 @@ TEST(SUBADDRESS, PupulateSubaddresses)
 	string address = "56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV";
 	string viewkey = "b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09";
 
-	auto acc = account_factory(address, viewkey);
+	auto pacc = make_primaryaccount(address, viewkey);
 
-	EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::PRIMARY);
+	EXPECT_EQ(pacc->type(), Account::ADDRESS_TYPE::PRIMARY);
 	
-	auto pacc = static_cast<PrimaryAccount*>(acc.get());
-
 	pacc->populate_subaddress_indices();
 
 	for (auto const& kv: *pacc)

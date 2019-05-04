@@ -408,17 +408,15 @@ TEST(Subaddresses, RegularTwoOutputTxToSubaddress)
     string const raddress {"56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV"};
     string const rviewkey {"b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09"};
     
-    auto racc = account_factory(raddress, rviewkey);
+    auto racc = make_primaryaccount(raddress, rviewkey);
 
     // make sure we have primary address
     ASSERT_FALSE(racc->is_subaddress());
     
-    auto sacc = static_cast<PrimaryAccount*>(racc.get());
-
-    sacc->populate_subaddress_indices();
+    racc->populate_subaddress_indices();
 
     auto identifier = make_identifier(jtx->tx,
-          make_unique<Output>(sacc));
+          make_unique<Output>(racc.get()));
 
     identifier.identify();
 
