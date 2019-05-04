@@ -198,6 +198,17 @@ public:
         return gen_subaddress({acc_id, addr_id});
     }
 
+    unique_ptr<subaddress_index>
+    has_subaddress(public_key const& pub_spend_key)
+    {
+        auto it = subaddresses.find(pub_spend_key);
+        
+        if (it == subaddresses.end())
+            return nullptr;
+
+        return make_unique<subaddress_index>(it->second);
+    }
+
     /**
      * Unlike above, it does not produce SubaddressAcount 
      * It just calcualtes public spend key for a subaddress

@@ -136,7 +136,32 @@ Output::identify(transaction const& tx,
         // which cointains subaddress
         auto derivation_to_save = derivation;
 
-	    bool mine_output = (pub_spend_key == subaddress_spendkey);
+	    bool mine_output {false};
+
+        if (!acc)
+        {
+            // if acc is not given, we check generated 
+            // subaddress_spendkey against the spendkey 
+            // of the address for which the Output identifier
+            // was instantiated
+    	    mine_output = (pub_spend_key == subaddress_spendkey);
+        }
+        else
+        {
+            // if acc is given, we are going to use its 
+            // subaddress unordered map to check if generated
+            // subaddress_spendkey is one of its keys. this is 
+            // because the map can contain spendkeys of subaddreses
+            // assiciated with primary address. primary address's
+            // spendkey will be one of the keys as a special case
+            
+            assert(!acc->is_subaddress());
+            auto sacc = static_cast<PrimaryAccount*>(acc);
+            
+            auto subaddr_idx = sacc->has_subaddress(subaddress_spendkey); 
+
+            mine_output = bool {subaddr_idx};
+        }
 
         auto with_additional = false;
 

@@ -395,4 +395,39 @@ TEST_P(ModularIdentifierTest, RealInputRingCT)
                 == jtx->sender.inputs);
 }
 
+
+TEST(Subaddresses, RegularTwoOutputTxToSubaddress)
+{
+    // this tx has funds for one subaddress. so we try to identify the outputs
+    // and the subaddress using primary address of the recipient
+    auto jtx = construct_jsontx("024dc13cb11d411682f04d41b52931849527d530e4cb198a63526c13da31a413");
+
+    ASSERT_TRUE(jtx);
+
+    // recipeint primary address and viewkey
+    string const raddress {"56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV"};
+    string const rviewkey {"b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09"};
+    
+    auto racc = account_factory(raddress, rviewkey);
+
+    // make sure we have primary address
+    ASSERT_FALSE(racc->is_subaddress());
+    
+    auto sacc = static_cast<PrimaryAccount*>(racc.get());
+
+    sacc->populate_subaddress_indices();
+
+    auto identifier = make_identifier(jtx->tx,
+          make_unique<Output>(sacc));
+
+    identifier.identify();
+
+    EXPECT_EQ(identifier.get<0>()->get().size(),
+              jtx->recipients.at(0).outputs.size());
+
+    EXPECT_TRUE(identifier.get<0>()->get() 
+            == jtx->recipients.at(0).outputs);
+}
+
+
 }
