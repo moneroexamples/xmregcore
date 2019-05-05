@@ -425,6 +425,15 @@ TEST(Subaddresses, RegularTwoOutputTxToSubaddress)
 
     EXPECT_TRUE(identifier.get<0>()->get() 
             == jtx->recipients.at(0).outputs);
+
+    auto const& output_info 
+        = identifier.get<0>()->get().at(0);
+
+    EXPECT_TRUE(output_info.has_subaddress_index());
+    
+    subaddress_index expected_idx {0, 6};
+
+    EXPECT_EQ(output_info.subaddr_idx, expected_idx);
 }
 
 

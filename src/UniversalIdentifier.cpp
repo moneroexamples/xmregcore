@@ -104,6 +104,18 @@ Output::identify(transaction const& tx,
 	auto const& pub_spend_key 
 		= get_address()->address.m_spend_public_key;
 
+    // if we have PrimaryAccount we can check 
+    // if a given output belongs to any of its
+    // its subaddresses
+    PrimaryAccount* pacc {nullptr};
+
+    if (acc && !acc->is_subaddress())
+    {
+        // so we have primary address
+        pacc = static_cast<PrimaryAccount*>(acc);
+    }
+
+
     for (auto i = 0u; i < tx.vout.size(); ++i)
     {
         // i will act as output indxes in the tx
@@ -124,7 +136,15 @@ Output::identify(transaction const& tx,
 	    // public monero address. Primary address is 
 		// a special case of subaddress. 
 
+        // we are always going to have the subaddress_spend
+        // key if an output is ours
         crypto::public_key subaddress_spendkey;
+
+        // however we might not have its index, in case
+        // we are not using primary addresses directly
+        // but instead use a subaddress for searching
+        // outputs
+        std::unique_ptr<subaddress_index> subaddr_idx;
 
         hwdev.derive_subaddress_public_key(
 					txout_key.key, derivation, i, 
@@ -138,9 +158,9 @@ Output::identify(transaction const& tx,
 
 	    bool mine_output {false};
 
-        if (!acc)
+        if (!pacc)
         {
-            // if acc is not given, we check generated 
+            // if pacc is not given, we check generated 
             // subaddress_spendkey against the spendkey 
             // of the address for which the Output identifier
             // was instantiated
@@ -148,17 +168,14 @@ Output::identify(transaction const& tx,
         }
         else
         {
-            // if acc is given, we are going to use its 
+            // if pacc is given, we are going to use its 
             // subaddress unordered map to check if generated
             // subaddress_spendkey is one of its keys. this is 
             // because the map can contain spendkeys of subaddreses
             // assiciated with primary address. primary address's
             // spendkey will be one of the keys as a special case
             
-            assert(!acc->is_subaddress());
-            auto sacc = static_cast<PrimaryAccount*>(acc);
-            
-            auto subaddr_idx = sacc->has_subaddress(subaddress_spendkey); 
+            subaddr_idx = pacc->has_subaddress(subaddress_spendkey); 
 
             mine_output = bool {subaddr_idx};
         }
@@ -168,14 +185,20 @@ Output::identify(transaction const& tx,
         if (!mine_output && !additional_tx_pub_keys.empty())
         {
             // check for output using additional tx public keys
-         	crypto::public_key subaddress_spendkey;
-
 	    	hwdev.derive_subaddress_public_key(
 						txout_key.key, additional_derivations[i], 
 						i, 
 						subaddress_spendkey);
 	    
-			mine_output = (pub_spend_key == subaddress_spendkey);
+            if (!pacc)
+            {
+                mine_output = (pub_spend_key == subaddress_spendkey);
+            }
+            else
+            {
+                subaddr_idx = pacc->has_subaddress(subaddress_spendkey); 
+                mine_output = bool {subaddr_idx};
+            }
 
             with_additional = true;
         }
@@ -246,11 +269,17 @@ Output::identify(transaction const& tx,
                     info{
                         txout_key.key, amount, i, 
                         derivation_to_save,
-                        rtc_outpk, rtc_mask, rtc_amount
+                        rtc_outpk, rtc_mask, rtc_amount,
+                        subaddress_spendkey
                     });
 
-            total_xmr += amount;
+            if (subaddr_idx)
+            {
+                auto& out = identified_outputs.back();
+                out.subaddr_idx = *subaddr_idx;
+            }
 
+            total_xmr += amount;
         } //  if (mine_output)
 
     } // for (uint64_t i = 0; i < tx.vout.size(); ++i)

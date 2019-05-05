@@ -362,6 +362,7 @@ TEST(SUBADDRESS, PupulateSubaddresses)
 	{
 		auto sacc = pacc->gen_subaddress(kv.second);
 		if (!sacc) continue;
+        cout << *sacc << endl;
 		EXPECT_EQ(kv.first, sacc->psk());
 	}
 }

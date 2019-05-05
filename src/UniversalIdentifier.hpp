@@ -70,11 +70,6 @@ class Output : public BaseIdentifier
 {
 public:
 
-    //Output(address_parse_info const* _address,
-           //secret_key const* _viewkey)
-        //: BaseIdentifier(_address, _viewkey)
-    //{}
-    
     using BaseIdentifier::BaseIdentifier;
 
     void identify(transaction const& tx,
@@ -105,6 +100,17 @@ public:
         rct::key   rtc_mask;
         rct::key   rtc_amount;
 
+        public_key subaddress_spendkey;
+        subaddress_index subaddr_idx {
+            UINT32_MAX, UINT32_MAX};
+            // the max value means not given
+        
+        bool has_subaddress_index() const
+        {
+            return subaddr_idx.major != UINT32_MAX
+                && subaddr_idx.minor != UINT32_MAX;
+        }
+            
         friend std::ostream& operator<<(std::ostream& os,
                                         info const& _info);
     };

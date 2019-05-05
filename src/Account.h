@@ -375,7 +375,20 @@ Account::ai_to_str(address_parse_info const& addr_info,
 inline std::ostream&
 operator<<(std::ostream& os, Account const& _acc)
 {
+
+    string subaddr_str {"n/a"};
+
+    if (_acc.subaddr_idx)
+    {
+        stringstream ss;
+
+        ss << *_acc.subaddr_idx;
+
+        subaddr_str = ss.str(); 
+    }
+
     return os << "nt:" << static_cast<size_t>(_acc.nettype)
+              << ","   << subaddr_str   
               << ",a:" << _acc.ai2str()
               << ",v:" << _acc.vk2str()
               << ",s:" << _acc.sk2str();
