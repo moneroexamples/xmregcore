@@ -220,4 +220,41 @@ nettype_based_on_address(string const& address)
     return {determined_network_type, determined_address_type};
 }
 
+
+boost::optional<subaddress_index>
+parse_subaddress_index(string idx_str)
+{
+    vector<string> split_index;
+
+    boost::split(split_index, idx_str, 
+                 boost::is_any_of(",/"));
+
+    if (split_index.empty() 
+            || split_index.size() != 2)
+    {
+        cerr << "Incorrect subaddress index given: "
+              << idx_str << '\n';
+        return {};
+    }
+
+    try 
+    {
+        auto idx_major 
+            = boost::lexical_cast<uint32_t>(split_index[0]);
+        auto idx_minor 
+            = boost::lexical_cast<uint32_t>(split_index[1]);
+
+        return subaddress_index {idx_major, idx_minor};
+
+    }
+    catch (boost::bad_lexical_cast const& e)
+    {
+        cerr << e.what() << '\n';
+    }
+    
+    return {};
+}
+
+
+
 }

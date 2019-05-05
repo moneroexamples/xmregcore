@@ -190,6 +190,8 @@ Output::identify(transaction const& tx,
 						i, 
 						subaddress_spendkey);
 	    
+            // do same comparison as above depending of the 
+            // avaliabity of the PrimaryAddress Account 
             if (!pacc)
             {
                 mine_output = (pub_spend_key == subaddress_spendkey);
