@@ -114,7 +114,8 @@ INSTANTIATE_TEST_CASE_P(
         "a7a4e3bdb305b97c43034440b0bc5125c23b24d0730189261151c0aa3f2a05fc"s,
         "c06df274acc273fbce0666b2c8846ac6925a1931fb61e3020b7cc5410d4646b1"s,
         "d89f32f1434b6a668cbbc5c55cb1c0c64e41fccb89f6b1eef210fefdacbdd89f"s,
-        "bd461b938c3c8c8e4d9909852221d5c37350ade05e99ef836d6ccb628f6a5a0e"s
+        "bd461b938c3c8c8e4d9909852221d5c37350ade05e99ef836d6ccb628f6a5a0e"s,
+        "f81ecd0381c0b89f23cffe86a799e924af7b5843c663e8c07db98a14e913585e"s
         ));
 
 TEST_P(ModularIdentifierTest, OutputsRingCT)
@@ -436,5 +437,57 @@ TEST(Subaddresses, RegularTwoOutputTxToSubaddress)
     EXPECT_EQ(output_info.subaddr_idx, expected_idx);
 }
 
+TEST(Subaddresses, MultiOutputTxToSubaddress)
+{
+    // this tx has funds for one subaddress. so we try to identify the outputs
+    // and the subaddress using primary address of the recipient
+    auto jtx = construct_jsontx("f81ecd0381c0b89f23cffe86a799e924af7b5843c663e8c07db98a14e913585e");
+
+    ASSERT_TRUE(jtx);
+
+    // recipeint primary address and viewkey
+    string const raddress {"56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV"};
+    string const rviewkey {"b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09"};
+    
+    auto racc = make_primaryaccount(raddress, rviewkey);
+
+    // make sure we have primary address
+    ASSERT_FALSE(racc->is_subaddress());
+    
+    racc->populate_subaddress_indices();
+    
+    auto identifier = make_identifier(jtx->tx,
+          make_unique<Output>(racc.get()));
+    
+    identifier.identify();
+    
+    auto const& outputs_found 
+        = identifier.get<Output>()->get();
+
+    auto total_outputs = calc_total_xmr(outputs_found);
+
+    cout << outputs_found << endl;
+    cout << "ddddd" << endl;
+
+    uint64_t expected_total {0};
+
+    for (auto const& jrecipient: jtx->recipients)
+    {
+        auto identifier_rec = make_identifier(jtx->tx,
+              make_unique<Output>(&jrecipient.address,
+                                  &jrecipient.viewkey));
+
+       identifier_rec.identify();
+
+       auto const& output_rec
+           = identifier_rec.get<Output>()->get();
+    
+       expected_total += calc_total_xmr(output_rec);
+
+       cout << output_rec << endl;
+    }
+
+    EXPECT_EQ(total_outputs, expected_total);
+}
 
 }

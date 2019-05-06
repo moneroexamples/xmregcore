@@ -390,9 +390,14 @@ calc_total_xmr(T&& infos)
 inline std::ostream&
 operator<<(std::ostream& os, xmreg::Output::info const& _info)
 {
-    return os << _info.idx_in_tx << ", "
-              << pod_to_hex(_info.pub_key) << ", "
-              << _info.amount;
+    os << _info.idx_in_tx << ", "
+       << pod_to_hex(_info.pub_key) << ", "
+       << _info.amount;
+
+    if (_info.has_subaddress_index())
+        os << ", " << _info.subaddr_idx;
+
+    return os;
 }
 
 inline std::ostream&
@@ -402,6 +407,17 @@ operator<<(std::ostream& os, xmreg::Input::info const& _info)
               << pod_to_hex(_info.out_pub_key) << ", "
               << _info.amount;
 }
+
+template <typename T>
+inline std::ostream&
+operator<<(std::ostream& os, std::vector<T> const& _infos)
+{
+    for (auto&& _info: _infos)
+        os << _info << '\n';
+
+    return os;
+}
+
 
 }
 
