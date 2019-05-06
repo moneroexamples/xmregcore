@@ -79,7 +79,8 @@ operator!=(const Input::info& lhs, const JsonTx::input& rhs)
 }
 
 inline bool
-operator==(const vector<Input::info>& lhs, const vector<JsonTx::input>& rhs)
+operator==(const vector<Input::info>& lhs, 
+           const vector<JsonTx::input>& rhs)
 {
     if (lhs.size() != rhs.size())
         return false;
@@ -439,8 +440,9 @@ TEST(Subaddresses, RegularTwoOutputTxToSubaddress)
 
 TEST(Subaddresses, MultiOutputTxToSubaddress)
 {
-    // this tx has funds for one subaddress. so we try to identify the outputs
-    // and the subaddress using primary address of the recipient
+    // this tx has funds for few subaddress of the same primary account. 
+    // so we try to identify the outputs
+    // and the subaddresses indices using primary address of the recipient
     auto jtx = construct_jsontx("f81ecd0381c0b89f23cffe86a799e924af7b5843c663e8c07db98a14e913585e");
 
     ASSERT_TRUE(jtx);
@@ -471,6 +473,21 @@ TEST(Subaddresses, MultiOutputTxToSubaddress)
 
     uint64_t expected_total {0};
 
+    set<pair<string, string>> output_indices;
+
+    for (auto&& out: outputs_found)
+    {
+        auto subaddr_idx = std::to_string(out.subaddr_idx.major)
+                           + "/"  
+                           + std::to_string(out.subaddr_idx.minor);
+
+        output_indices.insert({pod_to_hex(out.pub_key), 
+                               subaddr_idx});
+
+    }
+    
+    set<pair<string, string>> expected_indices;
+
     for (auto const& jrecipient: jtx->recipients)
     {
         auto identifier_rec = make_identifier(jtx->tx,
@@ -484,10 +501,32 @@ TEST(Subaddresses, MultiOutputTxToSubaddress)
     
        expected_total += calc_total_xmr(output_rec);
 
+
+        for (auto&& out: output_rec)
+        {
+             stringstream ss;
+
+             ss << *jrecipient.subaddr_idx;
+
+             expected_indices.insert({pod_to_hex(out.pub_key), 
+                                      ss.str()});
+        }
+
        cout << output_rec << endl;
     }
 
     EXPECT_EQ(total_outputs, expected_total);
+
+    vector<decltype(output_indices)::value_type> result;
+
+    std::set_symmetric_difference(output_indices.begin(),
+                                  output_indices.end(),
+                                  expected_indices.begin(),
+                                  expected_indices.end(),
+                                  std::back_inserter(result));
+
+    EXPECT_TRUE(result.empty());
+
 }
 
 }
