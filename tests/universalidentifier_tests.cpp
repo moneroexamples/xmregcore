@@ -64,6 +64,7 @@ operator==(const vector<Output::info>& lhs, const vector<JsonTx::output>& rhs)
 
 // equality operators for inputs
 
+
 inline bool
 operator==(const Input::info& lhs, const JsonTx::input& rhs)
 {
@@ -92,8 +93,38 @@ operator==(const vector<Input::info>& lhs,
     }
 
     return true;
+}  
+
+
+inline bool
+operator==(const Input::info& lhs, const Input::info& rhs)
+{
+    return lhs.amount == rhs.amount
+            && lhs.out_pub_key == rhs.out_pub_key
+            && lhs.key_img == rhs.key_img;
 }
 
+inline bool
+operator!=(const Input::info& lhs, const Input::info& rhs)
+{
+    return !(lhs == rhs);
+}
+
+inline bool
+operator==(const vector<Input::info>& lhs, 
+           const vector<Input::info>& rhs)
+{
+    if (lhs.size() != rhs.size())
+        return false;
+
+    for (size_t i = 0; i < lhs.size(); i++)
+    {
+        if (lhs[i] != rhs[i])
+            return false;
+    }
+
+    return true;
+}  
 class DifferentJsonTxs :
         public ::testing::TestWithParam<string>
 {
@@ -558,8 +589,11 @@ TEST(Subaddresses, GuessInputFromSubaddress)
    auto const& expected_inputs = identifier.get<RealInput>()->get();
 
    EXPECT_EQ(found_inputs.size(), expected_inputs.size());
+   
+   EXPECT_TRUE(found_inputs == expected_inputs);
 
    cout << "Inputs found:" << found_inputs << endl;
+   cout << "Inputs expected:" << expected_inputs << endl;
 
 }
 

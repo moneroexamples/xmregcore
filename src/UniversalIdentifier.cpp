@@ -99,7 +99,6 @@ Output::identify(transaction const& tx,
         }
     }
 		
-	auto& hwdev = hw::get_device("default");
 
 	auto const& pub_spend_key 
 		= get_address()->address.m_spend_public_key;
@@ -300,7 +299,7 @@ Output::decode_ringct(rct::rctSig const& rv,
     {
         crypto::secret_key scalar1;
 
-        hw::get_device("default").derivation_to_scalar(derivation, i, scalar1);
+        hwdev.derivation_to_scalar(derivation, i, scalar1);
 
         switch (rv.type)
         {
@@ -311,14 +310,14 @@ Output::decode_ringct(rct::rctSig const& rv,
                                               rct::sk2rct(scalar1),
                                               i,
                                               mask,
-                                              hw::get_device("default"));
+                                              hwdev);
                 break;
             case rct::RCTTypeFull:
                 amount = rct::decodeRct(rv,
                                         rct::sk2rct(scalar1),
                                         i,
                                         mask,
-                                        hw::get_device("default"));
+                                        hwdev);
                 break;
             default:
                 cerr << "Unsupported rct type: " << rv.type << '\n';
@@ -681,21 +680,56 @@ void RealInput::identify(transaction const& tx,
 
             for (auto const& found_output: identifier.get<Output>()->get())
             {
+                //cout << "found_output: " << found_output << endl;
+
                 // generate key_image using this output
                 // to check for sure if the given key image is ours
                 // or not
                 crypto::key_image key_img_generated;
 
-                if (!generate_key_image(found_output.derivation,
-                                        found_output.idx_in_tx, /* position in the tx */
-                                        *spendkey,
-                                        get_address()->address.m_spend_public_key,
-                                        key_img_generated))
+                if (acc)
                 {
-                    throw std::runtime_error("Cant generate " 
-                            "key image for output: "
-                            + pod_to_hex(found_output.pub_key));
+                    // if we have primary account, as we should when
+                    // we want to include
+                    // for spendings from subaddresses, use the below procedure
+                    // to calcualted key_img_generated
+                    
+                    cryptonote::keypair in_ephemeral;
+                    
+                    if (!generate_key_image_helper_precomp(*acc->keys(), 
+                                                      found_output.pub_key,
+                                                      found_output.derivation,
+                                                      found_output.idx_in_tx,
+                                                      found_output.subaddr_idx,
+                                                      in_ephemeral,
+                                                      key_img_generated,
+                                                      hwdev))
+                    {
+                        throw std::runtime_error("Cant get key_img_generated");
+                    }
+
+                    (void) in_ephemeral;
                 }
+                else
+                {
+                    // if we don't have acc, i.e., dont have info about subaddresses
+                    // then use the simpler way
+                    // to calcualate key_img_generated
+                    
+                    if (!generate_key_image(found_output.derivation,
+                                            found_output.idx_in_tx, /* position in the tx */
+                                            *spendkey,
+                                            get_address()->address.m_spend_public_key,
+                                            key_img_generated))
+                    {
+                        throw std::runtime_error("Cant generate " 
+                                "key image for output: "
+                                + pod_to_hex(found_output.pub_key));
+                    }
+                }
+
+                //cout << pod_to_hex(in_key.k_image) << " == " 
+                     //<< pod_to_hex(key_img_generated) << '\n';
 
                 // now check if current key image in the tx which we
                 // analyze matches generated key image

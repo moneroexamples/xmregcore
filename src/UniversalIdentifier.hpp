@@ -35,7 +35,8 @@ public:
     BaseIdentifier(
             address_parse_info const* _address,
             secret_key const* _viewkey)
-        : address_info {_address}, viewkey {_viewkey}
+        : address_info {_address}, viewkey {_viewkey},
+          hwdev {hw::get_device("default")}
    {}
 
    BaseIdentifier(Account* _acc)
@@ -60,6 +61,7 @@ protected:
     secret_key const* viewkey {nullptr};
     uint64_t total_xmr {0};
     Account* acc {nullptr};
+    hw::device& hwdev;
 };
 
 /**
