@@ -356,8 +356,6 @@ TEST(SUBADDRESS, PupulateSubaddresses)
 
 	EXPECT_EQ(pacc->type(), Account::ADDRESS_TYPE::PRIMARY);
 	
-	pacc->populate_subaddress_indices();
-
 	for (auto const& kv: *pacc)
 	{
 		auto sacc = pacc->gen_subaddress(kv.second);

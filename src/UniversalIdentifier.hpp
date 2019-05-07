@@ -139,6 +139,14 @@ public:
           known_outputs {_known_outputs},
           mcore {_mcore}
     {}
+    
+    Input(Account* _acc,
+            known_outputs_t const* _known_outputs,
+           AbstractCore const* _mcore)
+        : BaseIdentifier(_acc),          
+          known_outputs {_known_outputs},
+          mcore {_mcore}
+    {}
 
     void identify(transaction const& tx,
                   public_key const& tx_pub_key,
@@ -191,6 +199,10 @@ public:
                MicroCore* _mcore)
         : Input(_a, _viewkey, nullptr, _mcore)
     {}
+    
+    GuessInput(Account* _acc, MicroCore* _mcore)
+        : Input(_acc, nullptr, _mcore)
+    {}
 
     void identify(transaction const& tx,
                   public_key const& tx_pub_key,
@@ -218,6 +230,13 @@ public:
         : Input(_a, _viewkey, nullptr, _mcore),
           spendkey {_spendkey}
     {}
+    
+    RealInput(Account* _acc, MicroCore* _mcore)
+        : Input(_acc, nullptr, _mcore)
+    {
+        assert(_acc->sk());
+        spendkey = &(*_acc->sk());
+    }
 
     void identify(transaction const& tx,
                   public_key const& tx_pub_key,

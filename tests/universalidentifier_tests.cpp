@@ -116,7 +116,8 @@ INSTANTIATE_TEST_CASE_P(
         "c06df274acc273fbce0666b2c8846ac6925a1931fb61e3020b7cc5410d4646b1"s,
         "d89f32f1434b6a668cbbc5c55cb1c0c64e41fccb89f6b1eef210fefdacbdd89f"s,
         "bd461b938c3c8c8e4d9909852221d5c37350ade05e99ef836d6ccb628f6a5a0e"s,
-        "f81ecd0381c0b89f23cffe86a799e924af7b5843c663e8c07db98a14e913585e"s
+        "f81ecd0381c0b89f23cffe86a799e924af7b5843c663e8c07db98a14e913585e"s,
+        "386ac4fbf7d3d2ab6fd4f2d9c2e97d00527ca2867e33cd7aedb1fd05a4b791ec"s
         ));
 
 TEST_P(ModularIdentifierTest, OutputsRingCT)
@@ -306,9 +307,6 @@ TEST_P(ModularIdentifierTest, GuessInputRingCT)
 
    identifier.identify();
 
-//   for (auto const& input_info: identifier.get<0>()->get())
-//       cout << input_info << endl;
-
    auto const& found_inputs = identifier.get<0>()->get();
 
    EXPECT_GE(found_inputs.size(),
@@ -456,8 +454,6 @@ TEST(Subaddresses, MultiOutputTxToSubaddress)
     // make sure we have primary address
     ASSERT_FALSE(racc->is_subaddress());
     
-    racc->populate_subaddress_indices();
-    
     auto identifier = make_identifier(jtx->tx,
           make_unique<Output>(racc.get()));
     
@@ -477,12 +473,12 @@ TEST(Subaddresses, MultiOutputTxToSubaddress)
 
     for (auto&& out: outputs_found)
     {
-        auto subaddr_idx = std::to_string(out.subaddr_idx.major)
-                           + "/"  
-                           + std::to_string(out.subaddr_idx.minor);
+        stringstream ss;
+
+        ss << out.subaddr_idx;
 
         output_indices.insert({pod_to_hex(out.pub_key), 
-                               subaddr_idx});
+                               ss.str()});
 
     }
     
@@ -526,6 +522,44 @@ TEST(Subaddresses, MultiOutputTxToSubaddress)
                                   std::back_inserter(result));
 
     EXPECT_TRUE(result.empty());
+
+}
+
+
+TEST(Subaddresses, GuessInputFromSubaddress)
+{
+    auto jtx = construct_jsontx("386ac4fbf7d3d2ab6fd4f2d9c2e97d00527ca2867e33cd7aedb1fd05a4b791ec");
+
+    ASSERT_TRUE(jtx);
+    
+    MockMicroCore mcore;
+    ADD_MOCKS(mcore);
+
+    // recipeint primary address and viewkey
+    string const raddress {"56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV"};
+    string const rviewkey {"b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09"};
+
+    // sender primary address and viewkey
+    string const sender_addr = jtx->sender.address_str();
+    string const sender_viewkey = pod_to_hex(jtx->sender.viewkey);
+    string const sender_spendkey = pod_to_hex(jtx->sender.spendkey);
+
+    auto sender = make_primaryaccount(sender_addr, 
+                                      sender_viewkey,
+                                      sender_spendkey);
+    
+    auto identifier = make_identifier(jtx->tx,
+          make_unique<GuessInput>(sender.get(), &mcore),
+          make_unique<RealInput>(sender.get(), &mcore));
+
+   identifier.identify();
+   
+   auto const& found_inputs = identifier.get<GuessInput>()->get();
+   auto const& expected_inputs = identifier.get<RealInput>()->get();
+
+   EXPECT_EQ(found_inputs.size(), expected_inputs.size());
+
+   cout << "Inputs found:" << found_inputs << endl;
 
 }
 

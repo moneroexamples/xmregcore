@@ -5,7 +5,8 @@ It includes:
 
  - classess for decoding outputs/inputs, payment ids
  - general utility tools (e.g., get default monero blockchain path)
- - more to come ...
+ - unified representation of monero addresses/accounts
+ - identification of outputs for subaddresses based on primary address 
 
 # C++14
 

@@ -462,7 +462,6 @@ Input::generate_key_image(const crypto::key_derivation& derivation,
 
     try
     {
-
         crypto::derive_secret_key(derivation, i,
                                   sec_key,
                                   in_ephemeral.sec);
@@ -508,7 +507,7 @@ GuessInput::identify(transaction const& tx,
     known_outputs_t known_outputs_map;
 
     auto input_no = tx.vin.size();
-
+           
     for (auto i = 0u; i < input_no; ++i)
     {
         if(tx.vin[i].type() != typeid(txin_to_key))
@@ -550,12 +549,23 @@ GuessInput::identify(transaction const& tx,
 
            // use Output universal identifier to identify our outputs
            // in a mixin tx
+
+           std::unique_ptr<Output> output_identifier;
+
+           if (acc)
+           {
+               output_identifier = make_unique<Output>(acc);
+           }
+           else
+           {
+               output_identifier = make_unique<Output>(
+                       get_address(), get_viewkey());
+           }
+
            auto identifier = make_identifier(
-                       mixin_tx,
-                       make_unique<Output>(get_address(), get_viewkey()));
+                       mixin_tx, std::move(output_identifier));
 
            identifier.identify();
-
 
            for (auto const& found_output: identifier.get<Output>()->get())
            {
@@ -649,9 +659,21 @@ void RealInput::identify(transaction const& tx,
 
             // use Output universal identifier to identify our outputs
             // in a mixin tx
+           
+            std::unique_ptr<Output> output_identifier;
+
+            if (acc)
+            {
+                output_identifier = make_unique<Output>(acc);
+            }
+            else
+            {
+                output_identifier = make_unique<Output>(
+                       get_address(), get_viewkey());
+            }
+
             auto identifier = make_identifier(
-                        mixin_tx,
-                        make_unique<Output>(get_address(), get_viewkey()));
+                       mixin_tx, std::move(output_identifier));
 
             identifier.identify();
 

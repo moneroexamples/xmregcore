@@ -322,10 +322,16 @@ make_primaryaccount(string const& addr_str,
 
     if (net_and_addr_type.second == address_type::REGULAR
               || net_and_addr_type.second == address_type::INTEGRATED)
-        return make_unique<PrimaryAccount>(
-                net_and_addr_type.first,
-                addr_str,
-                std::forward<T>(args)...);
+    {
+        auto pacc = make_unique<PrimaryAccount>(
+                    net_and_addr_type.first,
+                    addr_str,
+                    std::forward<T>(args)...);
+
+        pacc->populate_subaddress_indices();
+
+        return pacc;
+    }
 
     return nullptr;
 }
