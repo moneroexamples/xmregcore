@@ -148,7 +148,8 @@ INSTANTIATE_TEST_CASE_P(
         "d89f32f1434b6a668cbbc5c55cb1c0c64e41fccb89f6b1eef210fefdacbdd89f"s,
         "bd461b938c3c8c8e4d9909852221d5c37350ade05e99ef836d6ccb628f6a5a0e"s,
         "f81ecd0381c0b89f23cffe86a799e924af7b5843c663e8c07db98a14e913585e"s,
-        "386ac4fbf7d3d2ab6fd4f2d9c2e97d00527ca2867e33cd7aedb1fd05a4b791ec"s
+        "386ac4fbf7d3d2ab6fd4f2d9c2e97d00527ca2867e33cd7aedb1fd05a4b791ec"s,
+        "e658966b256ca30c85848751ff986e3ba7c7cfdadeb46ee1a845a042b3da90db"s
         ));
 
 TEST_P(ModularIdentifierTest, OutputsRingCT)
@@ -495,9 +496,6 @@ TEST(Subaddresses, MultiOutputTxToSubaddress)
 
     auto total_outputs = calc_total_xmr(outputs_found);
 
-    cout << outputs_found << endl;
-    cout << "ddddd" << endl;
-
     uint64_t expected_total {0};
 
     set<pair<string, string>> output_indices;
@@ -538,8 +536,6 @@ TEST(Subaddresses, MultiOutputTxToSubaddress)
              expected_indices.insert({pod_to_hex(out.pub_key), 
                                       ss.str()});
         }
-
-       cout << output_rec << endl;
     }
 
     EXPECT_EQ(total_outputs, expected_total);
@@ -566,9 +562,6 @@ TEST(Subaddresses, GuessInputFromSubaddress)
     MockMicroCore mcore;
     ADD_MOCKS(mcore);
 
-    // recipeint primary address and viewkey
-    string const raddress {"56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV"};
-    string const rviewkey {"b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09"};
 
     // sender primary address and viewkey
     string const sender_addr = jtx->sender.address_str();
@@ -592,9 +585,79 @@ TEST(Subaddresses, GuessInputFromSubaddress)
    
    EXPECT_TRUE(found_inputs == expected_inputs);
 
-   cout << "Inputs found:" << found_inputs << endl;
-   cout << "Inputs expected:" << expected_inputs << endl;
 
+   // now lets check recipient outputs
+
+   // recipeint primary address and viewkey
+   string const raddress {"55ZbQdMnZHPFS8pmrhHN5jMpgJwnnTXpTDmmM5wkrBBx4xD6aEnpZq7dPkeDeWs67TV9HunDQtT3qF2UGYWzGGxq3zYWCBE"};
+   string const rviewkey {"c8a4d62e3c86de907bd84463f194505ab07fc231b3da753342d93fccb5d39203"};
+
+
+   auto acc = make_account(raddress, rviewkey);
+
+   ASSERT_TRUE(acc->type() == Account::PRIMARY);
+
+   auto primary_account = dynamic_cast<PrimaryAccount*>(acc.get());
+    
+   ASSERT_TRUE(primary_account);
+
+   primary_account->populate_subaddress_indices();
+
+   auto ridentifier = make_identifier(jtx->tx,
+         make_unique<Output>(primary_account));
+    
+   ridentifier.identify();
+    
+   auto const& outputs_found 
+       = ridentifier.get<Output>()->get();
+
+   cout << outputs_found << endl;
+
+   EXPECT_EQ(outputs_found.size(), 3);
+
+   auto total_outputs = calc_total_xmr(outputs_found);
+   
+   EXPECT_EQ(total_outputs, 8000000000000);
+
+   vector<subaddress_index> expected_indices {{0, 1}, {0, 2}, {0, 3}}; 
+
+   for (size_t i {0}; i < outputs_found.size(); ++i)
+   {
+        EXPECT_EQ(outputs_found[i].subaddr_idx,
+                  expected_indices[i]);
+   }
+}
+
+TEST(Subaddresses, RealInputsToSubaddress)
+{
+    auto jtx = construct_jsontx("e658966b256ca30c85848751ff986e3ba7c7cfdadeb46ee1a845a042b3da90db");
+
+    ASSERT_TRUE(jtx);
+    
+    MockMicroCore mcore;
+    ADD_MOCKS(mcore);
+
+    // sender primary address and viewkey
+    string const sender_addr = jtx->sender.address_str();
+    string const sender_viewkey = pod_to_hex(jtx->sender.viewkey);
+    string const sender_spendkey = pod_to_hex(jtx->sender.spendkey);
+
+    auto sender = make_primaryaccount(sender_addr, 
+                                      sender_viewkey,
+                                      sender_spendkey);
+    
+    auto identifier = make_identifier(jtx->tx,
+          make_unique<GuessInput>(sender.get(), &mcore),
+          make_unique<RealInput>(sender.get(), &mcore));
+
+   identifier.identify();
+   
+   auto const& found_inputs = identifier.get<GuessInput>()->get();
+   auto const& expected_inputs = identifier.get<RealInput>()->get();
+
+   EXPECT_EQ(found_inputs.size(), expected_inputs.size());
+   
+   EXPECT_TRUE(found_inputs == expected_inputs);
 }
 
 }
