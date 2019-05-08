@@ -1,4 +1,4 @@
-# Moneroexamples core repositories
+# Core moneroexamples repositry
 
 This repository includes code that is oftenly used among moneroexamples projects.
 It includes:
@@ -8,9 +8,6 @@ It includes:
  - unified representation of monero addresses/accounts
  - identification of outputs for subaddresses based on primary address 
 
-# C++14
-
-C++14 is required to run this code.
 
 #### Monero download and compilation
 
@@ -20,6 +17,8 @@ https://github.com/moneroexamples/monero-compilation/blob/master/README.md
 
 
 #### Compilation of the xmregcore
+
+C++14 is required to run this code.
 
 ```bash
 
