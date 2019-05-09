@@ -393,11 +393,18 @@ operator<<(std::ostream& os, Account const& _acc)
         subaddr_str = ss.str(); 
     }
 
+    string spendkey_str {"N/A"};
+
+    if (_acc.sk())
+    {
+        spendkey_str = _acc.sk2str();
+    }
+
     return os << "nt:" << static_cast<size_t>(_acc.nettype)
               << ","   << subaddr_str   
               << ",a:" << _acc.ai2str()
               << ",v:" << _acc.vk2str()
-              << ",s:" << _acc.sk2str();
+              << ",s:" << spendkey_str;
 }
 
 }

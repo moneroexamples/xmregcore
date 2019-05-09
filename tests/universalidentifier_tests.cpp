@@ -227,15 +227,23 @@ TEST_P(ModularIdentifierTest, LegacyPaymentID)
     auto jtx = construct_jsontx(tx_hash_str);
 
     auto identifier = make_identifier(jtx->tx,
-          make_unique<LegacyPaymentID>(nullptr, nullptr));
+          make_unique<LegacyPaymentID>());
 
    identifier.identify();
 
-   EXPECT_TRUE(identifier.get<0>()->get()
-                == jtx->payment_id);
+   auto pid = identifier.get<0>()->get();
 
-   EXPECT_TRUE(identifier.get<0>()->raw()
-                == jtx->payment_id);
+   //cout << pod_to_hex(jtx->payment_id) << '\n';
+
+   if (jtx->payment_id == crypto::null_hash)
+   {
+       EXPECT_FALSE(pid);
+   }
+   else
+   {
+       EXPECT_TRUE(pid);
+       EXPECT_TRUE(*pid == jtx->payment_id);
+   }
 }
 
 
@@ -254,18 +262,17 @@ TEST_P(ModularIdentifierTest, IntegratedPaymentID)
 
    identifier.identify();
    
-   //cout << "decrypted: " << pod_to_hex(identifier.get<0>()->get()) 
-   //    << ", " << pod_to_hex(jtx->payment_id8e)  << endl;
+   auto pid = identifier.get<0>()->get();
 
-
-   EXPECT_TRUE(identifier.get<0>()->get()
-                == jtx->payment_id8e);
-
-   EXPECT_TRUE(identifier.get<0>()->raw()
-                == jtx->payment_id8);
-   
-   //cout << "row: " << pod_to_hex(identifier.get<0>()->raw()) 
-   //    << ", " << pod_to_hex(jtx->payment_id8) << endl;
+   if (jtx->payment_id8 == crypto::null_hash8)
+   {
+       EXPECT_FALSE(pid);
+   }
+   else
+   {
+       EXPECT_TRUE(pid);
+       EXPECT_TRUE(*pid == jtx->payment_id8e);
+   }
 }
 
 TEST_P(ModularIdentifierTest, InputWithKnownOutputs)

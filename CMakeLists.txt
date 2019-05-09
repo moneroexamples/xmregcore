@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 
-set(PROJECT_NAME xmregcore)
+set(PROJECT_NAME xmregcore_example)
 
 project(${PROJECT_NAME})
 
@@ -18,7 +18,7 @@ include(MyUtils)
 find_package(Monero)
 
 add_executable(${PROJECT_NAME}
-        main.cpp)
+        example.cpp)
 
 add_subdirectory(src/)
 

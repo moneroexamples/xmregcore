@@ -258,10 +258,18 @@ class PaymentID : public BaseIdentifier
 public:
 
     using payments_t = tuple<crypto::hash, crypto::hash8>;
+    
+    PaymentID()
+        : BaseIdentifier(nullptr, nullptr)
+    {}
 
     PaymentID(address_parse_info const* _address,
               secret_key const* _viewkey)
         : BaseIdentifier(_address, _viewkey)
+    {}
+    
+    PaymentID(Account* _acc)
+        : BaseIdentifier(_acc)
     {}
 
     void identify(transaction const& tx,
@@ -274,18 +282,34 @@ public:
         payment_id_tuple = get_payment_id(tx);
 
         payment_id = std::get<HashT>(payment_id_tuple);
+        
+        //cout << "payment_id_found: " 
+             //<< pod_to_hex(*payment_id) << endl;
 
         // if no payment_id found, return
-        if (payment_id == null_hash || get_viewkey() == nullptr)
+        if (*payment_id == null_hash)
+        {
+            payment_id = boost::none;
             return;
+        }
+        
+        // if no viewkey and we have integrated payment id
+        if (get_viewkey() == nullptr 
+                && sizeof(*payment_id) == sizeof(crypto::hash8))
+        {
+            payment_id = boost::none;
+            return;
+        }
 
         // decrypt integrated payment id. if its legacy payment id
         // nothing will happen.
-        if (!decrypt(payment_id, tx_pub_key))
+        if (!decrypt(*payment_id, tx_pub_key))
         {
             throw std::runtime_error("Cant decrypt pay_id: "
                                      + pod_to_hex(payment_id));
-        }                
+        }
+
+
     }
 
     payments_t
@@ -323,7 +347,7 @@ public:
     {return std::get<HashT>(payment_id_tuple);}
 
 private:
-    HashT payment_id {};
+    boost::optional<HashT> payment_id;
     HashT null_hash {};
     payments_t payment_id_tuple;
 };

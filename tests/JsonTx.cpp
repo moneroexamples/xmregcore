@@ -122,13 +122,12 @@ JsonTx::init()
         hex_to_pod(jtx["payment_id"], payment_id);
     }
 
-
     if (jtx.count("payment_id8"))
     {
         hex_to_pod(jtx["payment_id8"], payment_id8);
         hex_to_pod(jtx["payment_id8e"], payment_id8e);
-        cout << "jtx[\"payment_id8e\"] "<< jtx["tx_hash"] 
-        << ", " << jtx["payment_id8e"] << endl;
+        //cout << "jtx[\"payment_id8e\"] "<< jtx["tx_hash"] 
+             //<< ", " << jtx["payment_id8e"] << endl;
     }
 
     
