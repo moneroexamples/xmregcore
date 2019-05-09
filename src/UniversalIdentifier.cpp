@@ -98,6 +98,22 @@ Output::identify(transaction const& tx,
             }
         }
     }
+		
+
+	auto const& pub_spend_key 
+		= get_address()->address.m_spend_public_key;
+
+    // if we have PrimaryAccount we can check 
+    // if a given output belongs to any of its
+    // its subaddresses
+    PrimaryAccount* pacc {nullptr};
+
+    if (acc && !acc->is_subaddress())
+    {
+        // so we have primary address
+        pacc = static_cast<PrimaryAccount*>(acc);
+    }
+
 
     for (auto i = 0u; i < tx.vout.size(); ++i)
     {
@@ -112,15 +128,26 @@ Output::identify(transaction const& tx,
 
         uint64_t amount = tx.vout[i].amount;
 
-        // get the tx output public key
-        // that normally would be generated for us,
-        // if someone had sent us some xmr.
-        public_key generated_tx_pubkey;
+		// calculate public spendkey using derivation
+		// and tx output key. If this is our output
+		// the caulcualted public spendkey should match
+ 		// our actuall public spend key avaiable in our
+	    // public monero address. Primary address is 
+		// a special case of subaddress. 
 
-        derive_public_key(derivation,
-                          i,
-                          get_address()->address.m_spend_public_key,
-                          generated_tx_pubkey);
+        // we are always going to have the subaddress_spend
+        // key if an output is ours
+        crypto::public_key subaddress_spendkey;
+
+        // however we might not have its index, in case
+        // we are not using primary addresses directly
+        // but instead use a subaddress for searching
+        // outputs
+        std::unique_ptr<subaddress_index> subaddr_idx;
+
+        hwdev.derive_subaddress_public_key(
+					txout_key.key, derivation, i, 
+					subaddress_spendkey);
 
         // this derivation is going to be saved 
         // it can be one of addiitnal derivations
@@ -128,26 +155,51 @@ Output::identify(transaction const& tx,
         // which cointains subaddress
         auto derivation_to_save = derivation;
 
-//        cout << pod_to_hex(derivation) << ", " << i << ", "
-//             << pod_to_hex(get_address()->address.m_spend_public_key) << ", "
-//             << pod_to_hex(txout_key.key) << " == "
-//             << pod_to_hex(generated_tx_pubkey) << '\n'  << '\n';
+	    bool mine_output {false};
 
-        // check if generated public key matches the current output's key
-        bool mine_output = (txout_key.key == generated_tx_pubkey);
+        if (!pacc)
+        {
+            // if pacc is not given, we check generated 
+            // subaddress_spendkey against the spendkey 
+            // of the address for which the Output identifier
+            // was instantiated
+    	    mine_output = (pub_spend_key == subaddress_spendkey);
+        }
+        else
+        {
+            // if pacc is given, we are going to use its 
+            // subaddress unordered map to check if generated
+            // subaddress_spendkey is one of its keys. this is 
+            // because the map can contain spendkeys of subaddreses
+            // assiciated with primary address. primary address's
+            // spendkey will be one of the keys as a special case
+            
+            subaddr_idx = pacc->has_subaddress(subaddress_spendkey); 
+
+            mine_output = bool {subaddr_idx};
+        }
 
         auto with_additional = false;
 
         if (!mine_output && !additional_tx_pub_keys.empty())
         {
             // check for output using additional tx public keys
-            derive_public_key(additional_derivations[i],
-                              i,
-                              get_address()->address.m_spend_public_key,
-                              generated_tx_pubkey);
-
-
-            mine_output = (txout_key.key == generated_tx_pubkey);
+	    	hwdev.derive_subaddress_public_key(
+						txout_key.key, additional_derivations[i], 
+						i, 
+						subaddress_spendkey);
+	    
+            // do same comparison as above depending of the 
+            // avaliabity of the PrimaryAddress Account 
+            if (!pacc)
+            {
+                mine_output = (pub_spend_key == subaddress_spendkey);
+            }
+            else
+            {
+                subaddr_idx = pacc->has_subaddress(subaddress_spendkey); 
+                mine_output = bool {subaddr_idx};
+            }
 
             with_additional = true;
         }
@@ -216,13 +268,19 @@ Output::identify(transaction const& tx,
 
             identified_outputs.emplace_back(
                     info{
-                        generated_tx_pubkey, amount, i, 
+                        txout_key.key, amount, i, 
                         derivation_to_save,
-                        rtc_outpk, rtc_mask, rtc_amount
+                        rtc_outpk, rtc_mask, rtc_amount,
+                        subaddress_spendkey
                     });
 
-            total_xmr += amount;
+            if (subaddr_idx)
+            {
+                auto& out = identified_outputs.back();
+                out.subaddr_idx = *subaddr_idx;
+            }
 
+            total_xmr += amount;
         } //  if (mine_output)
 
     } // for (uint64_t i = 0; i < tx.vout.size(); ++i)
@@ -241,7 +299,7 @@ Output::decode_ringct(rct::rctSig const& rv,
     {
         crypto::secret_key scalar1;
 
-        hw::get_device("default").derivation_to_scalar(derivation, i, scalar1);
+        hwdev.derivation_to_scalar(derivation, i, scalar1);
 
         switch (rv.type)
         {
@@ -252,14 +310,14 @@ Output::decode_ringct(rct::rctSig const& rv,
                                               rct::sk2rct(scalar1),
                                               i,
                                               mask,
-                                              hw::get_device("default"));
+                                              hwdev);
                 break;
             case rct::RCTTypeFull:
                 amount = rct::decodeRct(rv,
                                         rct::sk2rct(scalar1),
                                         i,
                                         mask,
-                                        hw::get_device("default"));
+                                        hwdev);
                 break;
             default:
                 cerr << "Unsupported rct type: " << rv.type << '\n';
@@ -403,7 +461,6 @@ Input::generate_key_image(const crypto::key_derivation& derivation,
 
     try
     {
-
         crypto::derive_secret_key(derivation, i,
                                   sec_key,
                                   in_ephemeral.sec);
@@ -449,7 +506,7 @@ GuessInput::identify(transaction const& tx,
     known_outputs_t known_outputs_map;
 
     auto input_no = tx.vin.size();
-
+           
     for (auto i = 0u; i < input_no; ++i)
     {
         if(tx.vin[i].type() != typeid(txin_to_key))
@@ -491,12 +548,23 @@ GuessInput::identify(transaction const& tx,
 
            // use Output universal identifier to identify our outputs
            // in a mixin tx
+
+           std::unique_ptr<Output> output_identifier;
+
+           if (acc)
+           {
+               output_identifier = make_unique<Output>(acc);
+           }
+           else
+           {
+               output_identifier = make_unique<Output>(
+                       get_address(), get_viewkey());
+           }
+
            auto identifier = make_identifier(
-                       mixin_tx,
-                       make_unique<Output>(get_address(), get_viewkey()));
+                       mixin_tx, std::move(output_identifier));
 
            identifier.identify();
-
 
            for (auto const& found_output: identifier.get<Output>()->get())
            {
@@ -590,9 +658,21 @@ void RealInput::identify(transaction const& tx,
 
             // use Output universal identifier to identify our outputs
             // in a mixin tx
+           
+            std::unique_ptr<Output> output_identifier;
+
+            if (acc)
+            {
+                output_identifier = make_unique<Output>(acc);
+            }
+            else
+            {
+                output_identifier = make_unique<Output>(
+                       get_address(), get_viewkey());
+            }
+
             auto identifier = make_identifier(
-                        mixin_tx,
-                        make_unique<Output>(get_address(), get_viewkey()));
+                       mixin_tx, std::move(output_identifier));
 
             identifier.identify();
 
@@ -600,21 +680,56 @@ void RealInput::identify(transaction const& tx,
 
             for (auto const& found_output: identifier.get<Output>()->get())
             {
+                //cout << "found_output: " << found_output << endl;
+
                 // generate key_image using this output
                 // to check for sure if the given key image is ours
                 // or not
                 crypto::key_image key_img_generated;
 
-                if (!generate_key_image(found_output.derivation,
-                                        found_output.idx_in_tx, /* position in the tx */
-                                        *spendkey,
-                                        get_address()->address.m_spend_public_key,
-                                        key_img_generated))
+                if (acc)
                 {
-                    throw std::runtime_error("Cant generate " 
-                            "key image for output: "
-                            + pod_to_hex(found_output.pub_key));
+                    // if we have primary account, as we should when
+                    // we want to include
+                    // for spendings from subaddresses, use the below procedure
+                    // to calcualted key_img_generated
+                    
+                    cryptonote::keypair in_ephemeral;
+                    
+                    if (!generate_key_image_helper_precomp(*acc->keys(), 
+                                                      found_output.pub_key,
+                                                      found_output.derivation,
+                                                      found_output.idx_in_tx,
+                                                      found_output.subaddr_idx,
+                                                      in_ephemeral,
+                                                      key_img_generated,
+                                                      hwdev))
+                    {
+                        throw std::runtime_error("Cant get key_img_generated");
+                    }
+
+                    (void) in_ephemeral;
                 }
+                else
+                {
+                    // if we don't have acc, i.e., dont have info about subaddresses
+                    // then use the simpler way
+                    // to calcualate key_img_generated
+                    
+                    if (!generate_key_image(found_output.derivation,
+                                            found_output.idx_in_tx, /* position in the tx */
+                                            *spendkey,
+                                            get_address()->address.m_spend_public_key,
+                                            key_img_generated))
+                    {
+                        throw std::runtime_error("Cant generate " 
+                                "key image for output: "
+                                + pod_to_hex(found_output.pub_key));
+                    }
+                }
+
+                //cout << pod_to_hex(in_key.k_image) << " == " 
+                     //<< pod_to_hex(key_img_generated) << '\n';
 
                 // now check if current key image in the tx which we
                 // analyze matches generated key image

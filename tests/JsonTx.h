@@ -47,6 +47,7 @@ public:
         uint64_t change {0};
         vector<output> outputs;
         vector<input> inputs;
+        boost::optional<subaddress_index> subaddr_idx; 
 
         inline string
         address_str() const

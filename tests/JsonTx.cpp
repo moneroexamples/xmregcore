@@ -106,7 +106,7 @@ JsonTx::get_output_key(
                                   out_pk,
                                   jring_member["unlock_time"],
                                   jring_member["height"],
-                                  commitment                              });
+                                  commitment});
         }
     }
 }
@@ -122,13 +122,12 @@ JsonTx::init()
         hex_to_pod(jtx["payment_id"], payment_id);
     }
 
-
     if (jtx.count("payment_id8"))
     {
         hex_to_pod(jtx["payment_id8"], payment_id8);
         hex_to_pod(jtx["payment_id8e"], payment_id8e);
-        cout << "jtx[\"payment_id8e\"] "<< jtx["tx_hash"] 
-        << ", " << jtx["payment_id8e"] << endl;
+        //cout << "jtx[\"payment_id8e\"] "<< jtx["tx_hash"] 
+             //<< ", " << jtx["payment_id8e"] << endl;
     }
 
     
@@ -181,6 +180,16 @@ JsonTx::init()
 
             // recipients dont have inputs so we do not populate
             // them here.
+            if (jrecpient.count("subaddress_index"))
+            {
+                auto saddr_idx = parse_subaddress_index(
+                        jrecpient["subaddress_index"]);
+
+                if (saddr_idx)
+                {
+                    recipients.back().subaddr_idx = saddr_idx;
+                }
+            }
         }
     }
 

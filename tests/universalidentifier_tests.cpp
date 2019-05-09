@@ -64,6 +64,7 @@ operator==(const vector<Output::info>& lhs, const vector<JsonTx::output>& rhs)
 
 // equality operators for inputs
 
+
 inline bool
 operator==(const Input::info& lhs, const JsonTx::input& rhs)
 {
@@ -79,7 +80,8 @@ operator!=(const Input::info& lhs, const JsonTx::input& rhs)
 }
 
 inline bool
-operator==(const vector<Input::info>& lhs, const vector<JsonTx::input>& rhs)
+operator==(const vector<Input::info>& lhs, 
+           const vector<JsonTx::input>& rhs)
 {
     if (lhs.size() != rhs.size())
         return false;
@@ -91,8 +93,38 @@ operator==(const vector<Input::info>& lhs, const vector<JsonTx::input>& rhs)
     }
 
     return true;
+}  
+
+
+inline bool
+operator==(const Input::info& lhs, const Input::info& rhs)
+{
+    return lhs.amount == rhs.amount
+            && lhs.out_pub_key == rhs.out_pub_key
+            && lhs.key_img == rhs.key_img;
 }
 
+inline bool
+operator!=(const Input::info& lhs, const Input::info& rhs)
+{
+    return !(lhs == rhs);
+}
+
+inline bool
+operator==(const vector<Input::info>& lhs, 
+           const vector<Input::info>& rhs)
+{
+    if (lhs.size() != rhs.size())
+        return false;
+
+    for (size_t i = 0; i < lhs.size(); i++)
+    {
+        if (lhs[i] != rhs[i])
+            return false;
+    }
+
+    return true;
+}  
 class DifferentJsonTxs :
         public ::testing::TestWithParam<string>
 {
@@ -114,7 +146,10 @@ INSTANTIATE_TEST_CASE_P(
         "a7a4e3bdb305b97c43034440b0bc5125c23b24d0730189261151c0aa3f2a05fc"s,
         "c06df274acc273fbce0666b2c8846ac6925a1931fb61e3020b7cc5410d4646b1"s,
         "d89f32f1434b6a668cbbc5c55cb1c0c64e41fccb89f6b1eef210fefdacbdd89f"s,
-        "bd461b938c3c8c8e4d9909852221d5c37350ade05e99ef836d6ccb628f6a5a0e"s
+        "bd461b938c3c8c8e4d9909852221d5c37350ade05e99ef836d6ccb628f6a5a0e"s,
+        "f81ecd0381c0b89f23cffe86a799e924af7b5843c663e8c07db98a14e913585e"s,
+        "386ac4fbf7d3d2ab6fd4f2d9c2e97d00527ca2867e33cd7aedb1fd05a4b791ec"s,
+        "e658966b256ca30c85848751ff986e3ba7c7cfdadeb46ee1a845a042b3da90db"s
         ));
 
 TEST_P(ModularIdentifierTest, OutputsRingCT)
@@ -192,15 +227,23 @@ TEST_P(ModularIdentifierTest, LegacyPaymentID)
     auto jtx = construct_jsontx(tx_hash_str);
 
     auto identifier = make_identifier(jtx->tx,
-          make_unique<LegacyPaymentID>(nullptr, nullptr));
+          make_unique<LegacyPaymentID>());
 
    identifier.identify();
 
-   EXPECT_TRUE(identifier.get<0>()->get()
-                == jtx->payment_id);
+   auto pid = identifier.get<0>()->get();
 
-   EXPECT_TRUE(identifier.get<0>()->raw()
-                == jtx->payment_id);
+   //cout << pod_to_hex(jtx->payment_id) << '\n';
+
+   if (jtx->payment_id == crypto::null_hash)
+   {
+       EXPECT_FALSE(pid);
+   }
+   else
+   {
+       EXPECT_TRUE(pid);
+       EXPECT_TRUE(*pid == jtx->payment_id);
+   }
 }
 
 
@@ -219,18 +262,17 @@ TEST_P(ModularIdentifierTest, IntegratedPaymentID)
 
    identifier.identify();
    
-   //cout << "decrypted: " << pod_to_hex(identifier.get<0>()->get()) 
-   //    << ", " << pod_to_hex(jtx->payment_id8e)  << endl;
+   auto pid = identifier.get<0>()->get();
 
-
-   EXPECT_TRUE(identifier.get<0>()->get()
-                == jtx->payment_id8e);
-
-   EXPECT_TRUE(identifier.get<0>()->raw()
-                == jtx->payment_id8);
-   
-   //cout << "row: " << pod_to_hex(identifier.get<0>()->raw()) 
-   //    << ", " << pod_to_hex(jtx->payment_id8) << endl;
+   if (jtx->payment_id8 == crypto::null_hash8)
+   {
+       EXPECT_FALSE(pid);
+   }
+   else
+   {
+       EXPECT_TRUE(pid);
+       EXPECT_TRUE(*pid == jtx->payment_id8e);
+   }
 }
 
 TEST_P(ModularIdentifierTest, InputWithKnownOutputs)
@@ -303,9 +345,6 @@ TEST_P(ModularIdentifierTest, GuessInputRingCT)
                     &mcore));
 
    identifier.identify();
-
-//   for (auto const& input_info: identifier.get<0>()->get())
-//       cout << input_info << endl;
 
    auto const& found_inputs = identifier.get<0>()->get();
 
@@ -393,6 +432,239 @@ TEST_P(ModularIdentifierTest, RealInputRingCT)
 
    EXPECT_TRUE(identifier.get<0>()->get()
                 == jtx->sender.inputs);
+}
+
+
+TEST(Subaddresses, RegularTwoOutputTxToSubaddress)
+{
+    // this tx has funds for one subaddress. so we try to identify the outputs
+    // and the subaddress using primary address of the recipient
+    auto jtx = construct_jsontx("024dc13cb11d411682f04d41b52931849527d530e4cb198a63526c13da31a413");
+
+    ASSERT_TRUE(jtx);
+
+    // recipeint primary address and viewkey
+    string const raddress {"56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV"};
+    string const rviewkey {"b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09"};
+    
+    auto racc = make_primaryaccount(raddress, rviewkey);
+
+    // make sure we have primary address
+    ASSERT_FALSE(racc->is_subaddress());
+    
+    racc->populate_subaddress_indices();
+
+    auto identifier = make_identifier(jtx->tx,
+          make_unique<Output>(racc.get()));
+
+    identifier.identify();
+
+    EXPECT_EQ(identifier.get<0>()->get().size(),
+              jtx->recipients.at(0).outputs.size());
+
+    EXPECT_TRUE(identifier.get<0>()->get() 
+            == jtx->recipients.at(0).outputs);
+
+    auto const& output_info 
+        = identifier.get<0>()->get().at(0);
+
+    EXPECT_TRUE(output_info.has_subaddress_index());
+    
+    subaddress_index expected_idx {0, 6};
+
+    EXPECT_EQ(output_info.subaddr_idx, expected_idx);
+}
+
+TEST(Subaddresses, MultiOutputTxToSubaddress)
+{
+    // this tx has funds for few subaddress of the same primary account. 
+    // so we try to identify the outputs
+    // and the subaddresses indices using primary address of the recipient
+    auto jtx = construct_jsontx("f81ecd0381c0b89f23cffe86a799e924af7b5843c663e8c07db98a14e913585e");
+
+    ASSERT_TRUE(jtx);
+
+    // recipeint primary address and viewkey
+    string const raddress {"56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV"};
+    string const rviewkey {"b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09"};
+    
+    auto racc = make_primaryaccount(raddress, rviewkey);
+
+    // make sure we have primary address
+    ASSERT_FALSE(racc->is_subaddress());
+    
+    auto identifier = make_identifier(jtx->tx,
+          make_unique<Output>(racc.get()));
+    
+    identifier.identify();
+    
+    auto const& outputs_found 
+        = identifier.get<Output>()->get();
+
+    auto total_outputs = calc_total_xmr(outputs_found);
+
+    uint64_t expected_total {0};
+
+    set<pair<string, string>> output_indices;
+
+    for (auto&& out: outputs_found)
+    {
+        stringstream ss;
+
+        ss << out.subaddr_idx;
+
+        output_indices.insert({pod_to_hex(out.pub_key), 
+                               ss.str()});
+
+    }
+    
+    set<pair<string, string>> expected_indices;
+
+    for (auto const& jrecipient: jtx->recipients)
+    {
+        auto identifier_rec = make_identifier(jtx->tx,
+              make_unique<Output>(&jrecipient.address,
+                                  &jrecipient.viewkey));
+
+       identifier_rec.identify();
+
+       auto const& output_rec
+           = identifier_rec.get<Output>()->get();
+    
+       expected_total += calc_total_xmr(output_rec);
+
+
+        for (auto&& out: output_rec)
+        {
+             stringstream ss;
+
+             ss << *jrecipient.subaddr_idx;
+
+             expected_indices.insert({pod_to_hex(out.pub_key), 
+                                      ss.str()});
+        }
+    }
+
+    EXPECT_EQ(total_outputs, expected_total);
+
+    vector<decltype(output_indices)::value_type> result;
+
+    std::set_symmetric_difference(output_indices.begin(),
+                                  output_indices.end(),
+                                  expected_indices.begin(),
+                                  expected_indices.end(),
+                                  std::back_inserter(result));
+
+    EXPECT_TRUE(result.empty());
+
+}
+
+
+TEST(Subaddresses, GuessInputFromSubaddress)
+{
+    auto jtx = construct_jsontx("386ac4fbf7d3d2ab6fd4f2d9c2e97d00527ca2867e33cd7aedb1fd05a4b791ec");
+
+    ASSERT_TRUE(jtx);
+    
+    MockMicroCore mcore;
+    ADD_MOCKS(mcore);
+
+
+    // sender primary address and viewkey
+    string const sender_addr = jtx->sender.address_str();
+    string const sender_viewkey = pod_to_hex(jtx->sender.viewkey);
+    string const sender_spendkey = pod_to_hex(jtx->sender.spendkey);
+
+    auto sender = make_primaryaccount(sender_addr, 
+                                      sender_viewkey,
+                                      sender_spendkey);
+    
+    auto identifier = make_identifier(jtx->tx,
+          make_unique<GuessInput>(sender.get(), &mcore),
+          make_unique<RealInput>(sender.get(), &mcore));
+
+   identifier.identify();
+   
+   auto const& found_inputs = identifier.get<GuessInput>()->get();
+   auto const& expected_inputs = identifier.get<RealInput>()->get();
+
+   EXPECT_EQ(found_inputs.size(), expected_inputs.size());
+   
+   EXPECT_TRUE(found_inputs == expected_inputs);
+
+
+   // now lets check recipient outputs
+
+   // recipeint primary address and viewkey
+   string const raddress {"55ZbQdMnZHPFS8pmrhHN5jMpgJwnnTXpTDmmM5wkrBBx4xD6aEnpZq7dPkeDeWs67TV9HunDQtT3qF2UGYWzGGxq3zYWCBE"};
+   string const rviewkey {"c8a4d62e3c86de907bd84463f194505ab07fc231b3da753342d93fccb5d39203"};
+
+
+   auto acc = make_account(raddress, rviewkey);
+
+   ASSERT_TRUE(acc->type() == Account::PRIMARY);
+
+   auto primary_account = dynamic_cast<PrimaryAccount*>(acc.get());
+    
+   ASSERT_TRUE(primary_account);
+
+   primary_account->populate_subaddress_indices();
+
+   auto ridentifier = make_identifier(jtx->tx,
+         make_unique<Output>(primary_account));
+    
+   ridentifier.identify();
+    
+   auto const& outputs_found 
+       = ridentifier.get<Output>()->get();
+
+   cout << outputs_found << endl;
+
+   EXPECT_EQ(outputs_found.size(), 3);
+
+   auto total_outputs = calc_total_xmr(outputs_found);
+   
+   EXPECT_EQ(total_outputs, 8000000000000);
+
+   vector<subaddress_index> expected_indices {{0, 1}, {0, 2}, {0, 3}}; 
+
+   for (size_t i {0}; i < outputs_found.size(); ++i)
+   {
+        EXPECT_EQ(outputs_found[i].subaddr_idx,
+                  expected_indices[i]);
+   }
+}
+
+TEST(Subaddresses, RealInputsToSubaddress)
+{
+    auto jtx = construct_jsontx("e658966b256ca30c85848751ff986e3ba7c7cfdadeb46ee1a845a042b3da90db");
+
+    ASSERT_TRUE(jtx);
+    
+    MockMicroCore mcore;
+    ADD_MOCKS(mcore);
+
+    // sender primary address and viewkey
+    string const sender_addr = jtx->sender.address_str();
+    string const sender_viewkey = pod_to_hex(jtx->sender.viewkey);
+    string const sender_spendkey = pod_to_hex(jtx->sender.spendkey);
+
+    auto sender = make_primaryaccount(sender_addr, 
+                                      sender_viewkey,
+                                      sender_spendkey);
+    
+    auto identifier = make_identifier(jtx->tx,
+          make_unique<GuessInput>(sender.get(), &mcore),
+          make_unique<RealInput>(sender.get(), &mcore));
+
+   identifier.identify();
+   
+   auto const& found_inputs = identifier.get<GuessInput>()->get();
+   auto const& expected_inputs = identifier.get<RealInput>()->get();
+
+   EXPECT_EQ(found_inputs.size(), expected_inputs.size());
+   
+   EXPECT_TRUE(found_inputs == expected_inputs);
 }
 
 }

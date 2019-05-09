@@ -14,7 +14,7 @@ using namespace xmreg;
 
 TEST(ACCOUNT, DefaultConstruction)
 {
-    auto acc = account_factory();
+    auto acc = make_account();
 
     EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::NONE);
     EXPECT_FALSE(*acc);
@@ -26,7 +26,7 @@ TEST(ACCOUNT, FullConstruction)
 
     ASSERT_TRUE(jtx);
 
-    auto acc = account_factory(jtx->ntype,
+    auto acc = make_account(jtx->ntype,
                                jtx->sender.address,
                                jtx->sender.viewkey,
                                jtx->sender.spendkey);
@@ -39,6 +39,10 @@ TEST(ACCOUNT, FullConstruction)
     EXPECT_EQ(acc->ai2str(), sender["address"]);
     EXPECT_EQ(acc->vk2str(), sender["viewkey"]);
     EXPECT_EQ(acc->sk2str(), sender["spendkey"]);
+
+    subaddress_index idx {0, 0};
+
+    EXPECT_EQ(acc->index(), idx);
 
     EXPECT_FALSE(acc->ai().is_subaddress);
 
@@ -53,7 +57,7 @@ TEST(ACCOUNT, FullConstructionFromStrings)
 
     auto const& sender = jtx->jtx["sender"];
 
-    auto acc = account_factory(sender["address"],
+    auto acc = make_account(sender["address"],
                                sender["viewkey"],
                                sender["spendkey"]);
 
@@ -73,7 +77,7 @@ TEST(ACCOUNT, OnlyAddressAndViewkeyFromStrings)
 
     auto const& sender = jtx->jtx["sender"];
 
-    auto acc = account_factory(sender["address"],
+    auto acc = make_account(sender["address"],
                                sender["viewkey"]);
 
     EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::PRIMARY);
@@ -91,7 +95,7 @@ TEST(ACCOUNT, NoSpendandViewKeysConstruction)
 
     auto const& sender = jtx->jtx["sender"];
 
-    auto acc = account_factory(sender["address"],
+    auto acc = make_account(sender["address"],
                                sender["viewkey"]);
 
     EXPECT_EQ(acc->nt(), jtx->ntype);
@@ -99,7 +103,7 @@ TEST(ACCOUNT, NoSpendandViewKeysConstruction)
     EXPECT_EQ(acc->vk(), jtx->sender.viewkey);
     EXPECT_FALSE(acc->sk());
 
-    auto acc2 = account_factory(sender["address"]);
+    auto acc2 = make_account(sender["address"]);
 
     EXPECT_EQ(acc2->nt(), jtx->ntype);
     EXPECT_EQ(acc2->ai().address, jtx->sender.address.address);
@@ -115,7 +119,7 @@ TEST(ACCOUNT, FullConstructionSubAddress)
 
     auto const& recipient1 = jtx->recipients[1];
 
-    auto acc = account_factory(jtx->ntype,
+    auto acc = make_account(jtx->ntype,
                                recipient1.address,
                                recipient1.viewkey,
                                recipient1.spendkey);
@@ -128,6 +132,8 @@ TEST(ACCOUNT, FullConstructionSubAddress)
     EXPECT_EQ(acc->sk2str(), jrecipient["spendkey"]);
     EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::SUBADDRESS);
 
+    EXPECT_FALSE(acc->index());
+
     EXPECT_TRUE(acc->ai().is_subaddress);
     EXPECT_TRUE(acc);
 }
@@ -138,7 +144,7 @@ TEST(ACCOUNT, FailedConstructionFromString1)
     string const wrong_viewkey = "fgdgsfdfgs";
     string const wrong_spendkey = "fgdgsfdfgs";
 
-    auto acc = account_factory(wrong_address, wrong_viewkey, wrong_spendkey);
+    auto acc = make_account(wrong_address, wrong_viewkey, wrong_spendkey);
 
     EXPECT_EQ(acc, nullptr);
 }
@@ -149,7 +155,7 @@ TEST(ACCOUNT, FailedConstructionFromString2)
     string const wrong_address = "56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbP";
     string const wrong_viewkey = "b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09";
 
-    auto acc = account_factory(wrong_address, wrong_viewkey);
+    auto acc = make_account(wrong_address, wrong_viewkey);
 
     EXPECT_EQ(acc, nullptr);
 }
@@ -176,7 +182,7 @@ TEST(ACCOUNT, FailedConstructionFromNonString)
     wrong_address.address.m_spend_public_key 
         = wrong_address.address.m_view_public_key; 
     
-    auto acc = account_factory(network_type::STAGENET, wrong_address);
+    auto acc = make_account(network_type::STAGENET, wrong_address);
 
     EXPECT_EQ(acc, nullptr);
 }
@@ -203,10 +209,159 @@ TEST(SUBADDRESS, BasicGenerationTest)
     string subaddr_str = get_account_address_as_str(jtx->ntype,
                                       !index.is_zero(), subaddres);
 
+
+    auto acc = make_account(index, subaddr_str);
+
     //cout << i << ": " <<  subaddr_str << '\n';
 
     EXPECT_EQ(subaddr_str,
               "77JBM7fQNgNKyqHN8dc7DN1mJ4CQZyHg5fXFUstQcHCYEp3rUXVGd8U8ezAdNPDwW7AxejmjQLhz9HjtuW4BwvCdBAcGxH5"s);
+
+    EXPECT_TRUE(acc->is_subaddress());
+    EXPECT_EQ(acc->ai2str(), subaddr_str);
+    EXPECT_EQ(acc->index(), index);
 }
 
+TEST(SUBADDRESS, UsingGenSubAddress)
+{
+    auto jtx = construct_jsontx("d7dcb2daa64b5718dad71778112d48ad62f4d5f54337037c420cb76efdd8a21c");
+
+    ASSERT_TRUE(jtx);
+    
+    auto const& sender = jtx->jtx["sender"];
+
+    auto acc = make_account(sender["address"],
+                               sender["viewkey"]);
+
+    ASSERT_FALSE(acc->is_subaddress());
+
+    auto pacc = static_cast<PrimaryAccount*>(acc.get());
+
+    auto sacc = pacc->gen_subaddress({0, 1}); 
+    
+    EXPECT_EQ(sacc->ai2str(),
+              "77JBM7fQNgNKyqHN8dc7DN1mJ4CQZyHg5fXFUstQcHCYEp3rUXVGd8U8ezAdNPDwW7AxejmjQLhz9HjtuW4BwvCdBAcGxH5"s);
+}
+
+TEST(SUBADDRESS, UsingGenSubAddress1)
+{
+    // monerowalletstagenet3
+    string address = "56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV";
+    string spendkey= "df0f5720ae0b69454ca7db35db677272c7c19513cd0dc4147b0e00792a10f406";
+    string viewkey = "b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09";
+
+    auto acc = make_account(address, viewkey, spendkey);
+
+    EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::PRIMARY);
+    
+    auto pacc = static_cast<PrimaryAccount*>(acc.get());
+
+    string expected_subaddress_0_1 = "77JBM7fQNgNKyqHN8dc7DN1mJ4CQZyHg5fXFUstQcHCYEp3rUXVGd8U8ezAdNPDwW7AxejmjQLhz9HjtuW4BwvCdBAcGxH5";
+    auto sacc1 = pacc->gen_subaddress(0, 1);
+    EXPECT_EQ(sacc1->ai2str(), expected_subaddress_0_1);
+    EXPECT_EQ(sacc1->vk2str(), viewkey);
+    EXPECT_EQ(sacc1->sk2str(), spendkey);
+
+    string expected_subaddress_0_10 = "7BTd51FGijwGquK2aPpiTPNvdKrf2CQpkCy2Z8EWFgSK1bapBkjvw2pLenzdLWeP91C3o5SHVuhRggQNHi3jP8jERBiZkBS";
+    auto sacc2 = pacc->gen_subaddress(0, 10);
+    EXPECT_EQ(sacc2->ai2str(), expected_subaddress_0_10);
+    EXPECT_EQ(sacc2->vk2str(), viewkey);
+    EXPECT_EQ(sacc2->sk2str(), spendkey);
+    EXPECT_TRUE(sacc2->is_subaddress());
+
+    string expected_subaddress_2_0 = "7A3KWyKJVWbc6ZKnygwoCSVsuSVHEvR3zGm4ak8cLdN3CDjDiKfdcQDfCTojpQX35PZtxqGJohm3aGxdvw7TMTLGBVkWZ3t";
+    auto sacc3 = pacc->gen_subaddress(2, 0);
+    EXPECT_EQ(sacc3->ai2str(), expected_subaddress_2_0);
+    EXPECT_EQ(sacc3->vk2str(), viewkey);
+    EXPECT_EQ(sacc3->sk2str(), spendkey);
+    EXPECT_TRUE(sacc3->is_subaddress());
+
+    string expected_subaddress_3_5 = "73TUymFmFiqejXhrr38VAP15CrcLF7efYNi7DzC4yKvZVM6a5PhXp3v76uVagnZFSTTJrtGSXqnYEYX8JUqnFBtbUG3QaTi";
+    auto sacc4 = pacc->gen_subaddress(3, 5);
+    EXPECT_EQ(sacc4->ai2str(), expected_subaddress_3_5);
+    EXPECT_EQ(sacc4->vk2str(), viewkey);
+    EXPECT_EQ(sacc4->sk2str(), spendkey);
+    EXPECT_TRUE(sacc4->is_subaddress());
+    subaddress_index idx4 {3, 5};
+    EXPECT_EQ(sacc4->index().value(), idx4);
+}
+
+TEST(SUBADDRESS, UsingGenSubAddressNoSpendkey)
+{
+    // monerowalletstagenet3
+    string address = "56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV";
+    string viewkey = "b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09";
+
+    auto acc = make_account(address, viewkey);
+
+    EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::PRIMARY);
+    
+    auto pacc = static_cast<PrimaryAccount*>(acc.get());
+
+    string expected_subaddress_0_1 = "77JBM7fQNgNKyqHN8dc7DN1mJ4CQZyHg5fXFUstQcHCYEp3rUXVGd8U8ezAdNPDwW7AxejmjQLhz9HjtuW4BwvCdBAcGxH5";
+    
+    auto sacc1 = pacc->gen_subaddress(0, 1);
+
+    EXPECT_EQ(sacc1->ai2str(), expected_subaddress_0_1);
+    EXPECT_EQ(sacc1->vk2str(), viewkey);
+    EXPECT_EQ(sacc1->sk2str(), "");
+}
+
+
+TEST(SUBADDRESS, UsingGenSubAddressNoViewkey)
+{
+    // monerowalletstagenet3
+    string address = "56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV";
+
+    auto acc = make_account(address);
+
+    EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::PRIMARY);
+    
+    auto pacc = static_cast<PrimaryAccount*>(acc.get());
+
+    auto sacc1 = pacc->gen_subaddress(0, 1);
+
+    EXPECT_EQ(sacc1, nullptr);
+}
+
+TEST(SUBADDRESS, AddSubAddressNoSpendkey)
+{
+    // monerowalletstagenet3
+    string address = "56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV";
+    string viewkey = "b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09";
+
+    auto acc = make_account(address, viewkey);
+
+    EXPECT_EQ(acc->type(), Account::ADDRESS_TYPE::PRIMARY);
+    
+    auto pacc = static_cast<PrimaryAccount*>(acc.get());
+
+    subaddress_index idx1 {2, 4};
+
+    auto sacc_it = pacc->add_subaddress_index(2, 4);
+
+    auto sacc = pacc->gen_subaddress(sacc_it->second);
+
+    EXPECT_EQ(*sacc->index(), idx1);
+}
+
+
+TEST(SUBADDRESS, PupulateSubaddresses)
+{
+	// monerowalletstagenet3
+	string address = "56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV";
+	string viewkey = "b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09";
+
+	auto pacc = make_primaryaccount(address, viewkey);
+
+	EXPECT_EQ(pacc->type(), Account::ADDRESS_TYPE::PRIMARY);
+	
+	for (auto const& kv: *pacc)
+	{
+		auto sacc = pacc->gen_subaddress(kv.second);
+		if (!sacc) continue;
+        cout << *sacc << endl;
+		EXPECT_EQ(kv.first, sacc->psk());
+	}
+}
 }
