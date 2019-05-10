@@ -47,6 +47,8 @@ Account::Account(network_type _nettype,
         spendkey = parse_secret_key(_spendkey);
 }
 
+constexpr uint32_t PrimaryAccount::SUBADDRESS_LOOKAHEAD_MAJOR;
+constexpr uint32_t PrimaryAccount::SUBADDRESS_LOOKAHEAD_MINOR;
 
 unique_ptr<SubaddressAccount> 
 PrimaryAccount::gen_subaddress(subaddress_index idx) 
@@ -102,36 +104,59 @@ PrimaryAccount::add_subaddress_index(uint32_t acc_id, uint32_t addr_id)
 }
 
 void 
-PrimaryAccount::populate_subaddress_indices(uint32_t last_acc_id)
+PrimaryAccount::populate_subaddress_indices(
+        uint32_t start_acc_id,
+        uint32_t last_acc_id)
 {
     auto& device = hw::get_device("default");
 
     auto const& account_keys = *(this->keys());
 
-    // first we populate for account of 0 as we 
-    // skip subaddr of 0.
-    auto public_keys = device.get_subaddress_spend_public_keys(
-           account_keys, 0, 1, 200); 
-
-    for (uint32_t addr_id {1}; addr_id < 200; ++addr_id)
+    if (start_acc_id == 0)
     {
-        subaddresses.insert({public_keys[addr_id-1], 
-                            {0, addr_id}});
+        // first we populate for account of 0 as we 
+        // skip subaddr of 0.
+        auto public_keys = device.get_subaddress_spend_public_keys(
+               account_keys, 0, 1, SUBADDRESS_LOOKAHEAD_MINOR); 
+
+        for (uint32_t addr_id {1}; 
+                addr_id < SUBADDRESS_LOOKAHEAD_MINOR; 
+                ++addr_id)
+        {
+            subaddresses.insert({public_keys[addr_id-1], 
+                                {0, addr_id}});
+        }
+        ++start_acc_id;
     }
 
     // for all remaning accounts, we generated subaddresses
     // from 0
-    for (uint32_t acc_id {1}; acc_id < last_acc_id; ++acc_id)
+    for (uint32_t acc_id {start_acc_id}; 
+            acc_id < last_acc_id; ++acc_id)
     {
        auto public_keys = device.get_subaddress_spend_public_keys(
-               account_keys, acc_id, 0, 200); 
+               account_keys, acc_id, 0, 
+               SUBADDRESS_LOOKAHEAD_MINOR); 
 
-        for (uint32_t addr_id {0}; addr_id < 200; ++addr_id)
+        for (uint32_t addr_id {0}; 
+                addr_id < SUBADDRESS_LOOKAHEAD_MINOR; 
+                ++addr_id)
         {
             subaddresses.insert({public_keys[addr_id], 
                                 {acc_id, addr_id}});
         }
     }
+
+    next_acc_id_to_populate = last_acc_id;
 }
 
+void
+PrimaryAccount::expand_subaddresses(uint32_t new_acc_id)
+{
+    if (new_acc_id < next_acc_id_to_populate)
+        return;
+
+    //populate_subaddress_indices(next
+    
+}
 }

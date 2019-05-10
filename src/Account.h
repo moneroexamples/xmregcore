@@ -170,6 +170,9 @@ class PrimaryAccount : public Account
 {
 public:
 
+    static constexpr uint32_t SUBADDRESS_LOOKAHEAD_MAJOR {50};
+    static constexpr uint32_t SUBADDRESS_LOOKAHEAD_MINOR {200};
+
     using subaddr_map_t =  std::unordered_map<
                     public_key,
                     subaddress_index>;
@@ -209,6 +212,14 @@ public:
         return make_unique<subaddress_index>(it->second);
     }
 
+    auto get_next_subbaddress_acc_id() const 
+    {
+        return next_acc_id_to_populate;
+    }
+
+    void
+    expand_subaddresses(uint32_t new_acc_id);
+
     /**
      * Unlike above, it does not produce SubaddressAcount 
      * It just calcualtes public spend key for a subaddress
@@ -223,7 +234,9 @@ public:
      * subaddresses map
      */
     void 
-    populate_subaddress_indices(uint32_t last_acc_id = 50);
+    populate_subaddress_indices(
+            uint32_t start_acc_id = 0,
+            uint32_t last_acc_id = SUBADDRESS_LOOKAHEAD_MAJOR);
 
 	auto begin() { return subaddresses.begin(); }
     auto begin() const { return subaddresses.cbegin(); }
@@ -233,6 +246,7 @@ public:
 
 private:
     subaddr_map_t subaddresses; 
+    uint32_t next_acc_id_to_populate {0};
 };
 
 // account_factory functions are helper functions

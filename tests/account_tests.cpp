@@ -355,12 +355,15 @@ TEST(SUBADDRESS, PupulateSubaddresses)
 	auto pacc = make_primaryaccount(address, viewkey);
 
 	EXPECT_EQ(pacc->type(), Account::ADDRESS_TYPE::PRIMARY);
+
+    EXPECT_EQ(pacc->get_next_subbaddress_acc_id(), 
+              PrimaryAccount::SUBADDRESS_LOOKAHEAD_MAJOR);
 	
 	for (auto const& kv: *pacc)
 	{
 		auto sacc = pacc->gen_subaddress(kv.second);
 		if (!sacc) continue;
-        cout << *sacc << endl;
+        //cout << *sacc << endl;
 		EXPECT_EQ(kv.first, sacc->psk());
 	}
 }
