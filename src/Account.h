@@ -373,6 +373,25 @@ make_primaryaccount(network_type net_type,
                 std::forward<T>(args)...);
 }
 
+static unique_ptr<PrimaryAccount>
+make_primaryaccount(std::unique_ptr<Account>&& acc)
+{
+    if (acc->type() != Account::PRIMARY)
+    {
+        return nullptr;
+    }
+
+    PrimaryAccount* p = static_cast<PrimaryAccount*>(
+                         acc.release());
+
+    unique_ptr<PrimaryAccount> pacc(p);
+
+    pacc->populate_subaddress_indices();
+
+    return pacc;
+}
+
+
  unique_ptr<SubaddressAccount> 
  create(PrimaryAccount const& acc, subaddress_index idx);
 

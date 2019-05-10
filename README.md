@@ -22,10 +22,6 @@ auto primary_account = xmreg::make_primaryaccount(
         "45ttEikQEZWN1m7VxaVN9rjQkpSdmpGZ82GwUps66neQ1PqbQMno4wMY8F5jiDt2GoHzCtMwa7PDPJUJYb1GYrMP4CwAwNp",
         "c9347bc1e101eab46d3a6532c5b6066e925f499b47d285d5720e6a6f4cc4350c");
 
-// if we want to analyze subaddresses, we need to generate
-// an initial set of 10'000 possible subaddresses
-primary_account->populate_subaddress_indices();
-
 auto tx = get_tx("54cef43983ca9eeded46c6cc1091bf6f689d91faf78e306a5ac6169e981105d8");
 
 // so now we can create an instance of a universal identifier
@@ -55,7 +51,7 @@ which in this case is for the
 // will search for outputs and inputs in a give tx addressed 
 // to the primary address only. this search will not account
 // for any outputs sent to subaddresses.
-auto primary_account = xmreg::make_primaryaccount(
+auto account = xmreg::make_account(
         "44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBLWs3H7otXft3XjrpDtQGv7SqSsaBYBb98uNbr2VBBEt7f2wfn3RVGQBEP3A",
         "f359631075708155cc3d92a32b75a7d02a5dcf27756707b47a2b31b21c389501");
 
@@ -66,8 +62,8 @@ auto tx = get_tx("aa739a3ce8d3171a422ed3a3f5016384cdb17a5d3eb5905021f1103574d47e
 // as well as outputs corresponding to the change returned to Monero
 // donation address
 auto identifier = make_identifier(*tx,
-      make_unique<xmreg::Output>(primary_account.get()),
-      make_unique<xmreg::GuessInput>(primary_account.get(), &mcore));
+      make_unique<xmreg::Output>(account.get()),
+      make_unique<xmreg::GuessInput>(account.get(), &mcore));
 
 identifier.identify();
 

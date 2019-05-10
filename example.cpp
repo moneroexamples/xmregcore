@@ -106,11 +106,11 @@ main(int ac, const char* av[])
         // use Monero donation address and viewkwey
         // will search of output in a give tx addressed 
         // to the primary address only. 
-        auto primary_account = xmreg::make_primaryaccount(
+        auto account = xmreg::make_account(
                 "44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBLWs3H7otXft3XjrpDtQGv7SqSsaBYBb98uNbr2VBBEt7f2wfn3RVGQBEP3A",
                 "f359631075708155cc3d92a32b75a7d02a5dcf27756707b47a2b31b21c389501");
 
-        cout << "Monero donation account: " << *primary_account << '\n';
+        cout << "Monero donation account: " << *account << '\n';
 
         auto tx = get_tx("e8ceef12683b3180d83dd1c24f8f871d52d206b80d8a6db6c5504eb0596b0312");
 
@@ -118,7 +118,7 @@ main(int ac, const char* av[])
             return EXIT_FAILURE;
 
         auto identifier = make_identifier(*tx,
-              make_unique<xmreg::Output>(primary_account.get()));
+              make_unique<xmreg::Output>(account.get()));
 
         identifier.identify();
 
@@ -140,10 +140,6 @@ main(int ac, const char* av[])
         auto primary_account = xmreg::make_primaryaccount(
                 "45ttEikQEZWN1m7VxaVN9rjQkpSdmpGZ82GwUps66neQ1PqbQMno4wMY8F5jiDt2GoHzCtMwa7PDPJUJYb1GYrMP4CwAwNp",
                 "c9347bc1e101eab46d3a6532c5b6066e925f499b47d285d5720e6a6f4cc4350c");
-
-        // if we want to analyze subaddress, we need to generate
-        // an initial list of 10'000 possible subaddress
-        primary_account->populate_subaddress_indices();
 
         cout << "Monero forum donation account: " << *primary_account << '\n';
 
@@ -176,7 +172,7 @@ main(int ac, const char* av[])
         // use Monero donation address and viewkwey
         // will search of inputs in a give tx addressed 
         // to the primary address only. 
-        auto primary_account = xmreg::make_primaryaccount(
+        auto account = xmreg::make_account(
                 "44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBLWs3H7otXft3XjrpDtQGv7SqSsaBYBb98uNbr2VBBEt7f2wfn3RVGQBEP3A",
                 "f359631075708155cc3d92a32b75a7d02a5dcf27756707b47a2b31b21c389501");
 
@@ -193,8 +189,8 @@ main(int ac, const char* av[])
         // as well as outputs corresponding to the change returned to Monero
         // donation address
         auto identifier = make_identifier(*tx,
-              make_unique<xmreg::Output>(primary_account.get()),
-              make_unique<xmreg::GuessInput>(primary_account.get(), &mcore));
+              make_unique<xmreg::Output>(account.get()),
+              make_unique<xmreg::GuessInput>(account.get(), &mcore));
 
         identifier.identify();
 
@@ -222,13 +218,24 @@ main(int ac, const char* av[])
         // use Monero forum donation address and viewkwey
         // will search of inputs in a give tx addressed 
         // to the primary address only. 
-        auto primary_account = xmreg::make_primaryaccount(
+        auto account = xmreg::make_account(
                 "45ttEikQEZWN1m7VxaVN9rjQkpSdmpGZ82GwUps66neQ1PqbQMno4wMY8F5jiDt2GoHzCtMwa7PDPJUJYb1GYrMP4CwAwNp",
                 "c9347bc1e101eab46d3a6532c5b6066e925f499b47d285d5720e6a6f4cc4350c");
 
-        // include outputs from subaddress as monero forum is primarly based 
-        // on donation to subaddresses
-        primary_account->populate_subaddress_indices();
+        // to work with subaddresses we need PrimaryAccount. We can
+        // create it using xmreg::make_primaryaccount instead of 
+        // xmreg::make_account. But in case we dont know ahead of time
+        // what account we have (we can have subbaddress account) we
+        // can manualy cast Account into PrimaryAccount
+
+        auto primary_account = xmreg::make_primaryaccount(
+                std::move(account));
+
+        if (!primary_account)
+        {
+            cerr << "Cant convert Account into PrimaryAccount\n";
+            return EXIT_FAILURE; 
+        }
 
         cout << "Monero formum donation account: " << *primary_account << '\n';
 
