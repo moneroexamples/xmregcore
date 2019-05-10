@@ -557,6 +557,11 @@ TEST(Subaddresses, MultiOutputTxToSubaddress)
 
     EXPECT_TRUE(result.empty());
 
+    // check if expansion of subbaddress list worked
+    EXPECT_EQ(racc->get_next_subbaddress_acc_id(),
+              PrimaryAccount::SUBADDRESS_LOOKAHEAD_MAJOR + 49);
+
+    EXPECT_EQ(racc->get_subaddress_map().size(), 10'000 + 49*200);
 }
 
 
@@ -633,6 +638,9 @@ TEST(Subaddresses, GuessInputFromSubaddress)
         EXPECT_EQ(outputs_found[i].subaddr_idx,
                   expected_indices[i]);
    }
+
+   EXPECT_EQ(primary_account->get_next_subbaddress_acc_id(),
+             PrimaryAccount::SUBADDRESS_LOOKAHEAD_MAJOR);
 }
 
 TEST(Subaddresses, RealInputsToSubaddress)

@@ -278,6 +278,28 @@ Output::identify(transaction const& tx,
             {
                 auto& out = identified_outputs.back();
                 out.subaddr_idx = *subaddr_idx;
+
+                // now need to check if we need to expand
+                // list of initial 10'000 of subaddresses.
+                // we do this only if account id (subaddress_idx.major)
+                // is greater than 0.
+                
+                auto next_subaddr_acc_id 
+                    = pacc->get_next_subbaddress_acc_id();
+
+                auto no_of_new_accounts = std::min<int>(
+                                static_cast<int>(out.subaddr_idx.major
+                                + PrimaryAccount::SUBADDRESS_LOOKAHEAD_MAJOR)
+                                - next_subaddr_acc_id
+                                , 50);
+
+                if (no_of_new_accounts > 0)
+                {
+                    auto new_last_acc_id 
+                        = pacc->get_next_subbaddress_acc_id() 
+                                      + no_of_new_accounts;
+                    pacc->expand_subaddresses(new_last_acc_id);
+                }
             }
 
             total_xmr += amount;
