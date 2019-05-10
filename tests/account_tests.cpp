@@ -346,7 +346,7 @@ TEST(SUBADDRESS, AddSubAddressNoSpendkey)
 }
 
 
-TEST(SUBADDRESS, PupulateSubaddresses)
+TEST(SUBADDRESS, PopulateSubaddresses)
 {
 	// monerowalletstagenet3
 	string address = "56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV";
@@ -355,6 +355,8 @@ TEST(SUBADDRESS, PupulateSubaddresses)
 	auto pacc = make_primaryaccount(address, viewkey);
 
 	EXPECT_EQ(pacc->type(), Account::ADDRESS_TYPE::PRIMARY);
+
+    EXPECT_EQ(pacc->get_subaddress_map().size(), 10'000);
 
     EXPECT_EQ(pacc->get_next_subbaddress_acc_id(), 
               PrimaryAccount::SUBADDRESS_LOOKAHEAD_MAJOR);
@@ -367,4 +369,33 @@ TEST(SUBADDRESS, PupulateSubaddresses)
 		EXPECT_EQ(kv.first, sacc->psk());
 	}
 }
+
+
+TEST(SUBADDRESS, ExpandSubaddresses)
+{
+	// monerowalletstagenet3
+	string address = "56heRv2ANffW1Py2kBkJDy8xnWqZsSrgjLygwjua2xc8Wbksead1NK1ehaYpjQhymGK4S8NPL9eLuJ16CuEJDag8Hq3RbPV";
+	string viewkey = "b45e6f38b2cd1c667459527decb438cdeadf9c64d93c8bccf40a9bf98943dc09";
+
+	auto pacc = make_primaryaccount(address, viewkey);
+
+    EXPECT_EQ(pacc->get_subaddress_map().size(), 10'000);
+
+    EXPECT_EQ(pacc->get_next_subbaddress_acc_id(), 
+              PrimaryAccount::SUBADDRESS_LOOKAHEAD_MAJOR);
+
+
+    auto new_last_acc_id = pacc->get_next_subbaddress_acc_id() 
+                           + 10;
+
+    pacc->expand_subaddresses(new_last_acc_id);
+
+    EXPECT_EQ(pacc->get_subaddress_map().size(), 12'000);
+
+    EXPECT_EQ(pacc->get_next_subbaddress_acc_id(), 
+              PrimaryAccount::SUBADDRESS_LOOKAHEAD_MAJOR + 10);
+
+}
+
+
 }

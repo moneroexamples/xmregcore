@@ -217,6 +217,14 @@ public:
         return next_acc_id_to_populate;
     }
 
+    auto const& get_subaddress_map() const
+    {
+        return subaddresses;
+    }
+
+    /** 
+     * expand subaddress map by to new_acc_id
+     */
     void
     expand_subaddresses(uint32_t new_acc_id);
 

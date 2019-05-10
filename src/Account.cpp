@@ -152,11 +152,12 @@ PrimaryAccount::populate_subaddress_indices(
 
 void
 PrimaryAccount::expand_subaddresses(uint32_t new_acc_id)
-{
+{    
     if (new_acc_id < next_acc_id_to_populate)
         return;
 
-    //populate_subaddress_indices(next
-    
+    auto start_acc_id = next_acc_id_to_populate;
+
+    populate_subaddress_indices(start_acc_id, new_acc_id);
 }
 }
