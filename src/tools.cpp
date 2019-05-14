@@ -5,6 +5,7 @@
 #include "tools.h"
 
 #include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
 
 
 namespace xmreg
