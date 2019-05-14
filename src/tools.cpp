@@ -227,8 +227,8 @@ parse_subaddress_index(string idx_str)
     vector<string> split_index;
 
     boost::split(split_index, idx_str, 
-                 boost::is_any_of(",/"));
-
+                 [](char c){return c == ',' || c == '/';});
+    
     if (split_index.empty() 
             || split_index.size() != 2)
     {
