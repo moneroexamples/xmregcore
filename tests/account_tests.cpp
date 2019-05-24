@@ -5,7 +5,7 @@
 #include "../src/Account.h"
 
 #include "mocks.h"
-
+#include "JsonTx.h"
 
 namespace
 {

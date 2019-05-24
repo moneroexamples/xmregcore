@@ -6,8 +6,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "JsonTx.h"
-
 namespace
 {
 
@@ -88,7 +86,7 @@ public:
                                   uint64_t global_amount_index));
 
     MOCK_CONST_METHOD1(get_tx_amount_output_indices,
-                    std::vector<uint64_t>(uint64_t const& tx_id));
+                    std::vector<uint64_t>(uint64_t tx_id));
 
     MOCK_CONST_METHOD2(get_random_outs_for_amounts,
                     bool(COMMAND_RPC_GET_OUTPUT_HISTOGRAM::request const& req,
@@ -99,7 +97,7 @@ public:
                              COMMAND_RPC_GET_OUTPUTS_BIN::response& res));
 
     MOCK_CONST_METHOD1(get_dynamic_base_fee_estimate,
-                       uint64_t(uint64_t const& grace_blocks));
+                       uint64_t(uint64_t grace_blocks));
 
     MOCK_CONST_METHOD2(get_mempool_txs,
                        bool(vector<tx_info>& tx_infos,

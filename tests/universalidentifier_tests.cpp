@@ -6,6 +6,7 @@
 #include "../src/UniversalIdentifier.hpp"
 
 #include "mocks.h"
+#include "JsonTx.h"
 
 #define ADD_MOCKS(mcore) \
     EXPECT_CALL(mcore, get_output_tx_and_index(_, _, _)) \
