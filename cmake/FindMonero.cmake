@@ -56,13 +56,13 @@ set(LIBS  cryptonote_core
           blockchain_db
           cryptonote_protocol
           cryptonote_basic
-          daemonizer
+          #daemonizer
           blocks
           lmdb
           ringct
           ringct_basic
           common
-          mnemonics
+          #mnemonics
           easylogging
           device
           epee
