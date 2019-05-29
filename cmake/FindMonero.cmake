@@ -54,7 +54,7 @@ set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "${MONERO_BUILD_DIR}"
 
 set(LIBS  cryptonote_core
           blockchain_db
-          cryptonote_protocol
+          #cryptonote_protocol
           cryptonote_basic
           #daemonizer
           blocks
