@@ -27,6 +27,14 @@ public:
         uint64_t index {0};
         public_key pub_key;
         uint64_t amount {0};
+
+        bool 
+        operator==(output const& other) const
+        {
+            return index == other.index 
+                && pub_key == other.pub_key
+                && amount == other.amount;
+        }
     };
     
     struct input 
@@ -34,6 +42,14 @@ public:
         key_image key_img;
         uint64_t amount;
         public_key out_pub_key;
+        
+        bool 
+        operator==(input const& other) const
+        {
+            return key_img == other.key_img
+                && amount == other.amount
+                && out_pub_key == other.out_pub_key;
+        }
     };
 
     struct account
@@ -61,6 +77,13 @@ public:
         get_account_keys() const
         {
             return {address.address, spendkey, viewkey};
+        }
+
+        inline json
+        get_addr_viewkey_as_json() const 
+        {
+            return {{"address", address_str()}, 
+                    {"viewkey", pod_to_hex(viewkey)}};
         }
 
         friend std::ostream&
@@ -134,12 +157,20 @@ operator<<(std::ostream& os, JsonTx::account const& _account)
     return os << _account.address_str();
 }
 
+    inline std::ostream&
+operator<<(std::ostream& os, JsonTx::output const& _output)
+{
+    return os << _output.index << ',' 
+              << pod_to_hex(_output.pub_key) << ','
+              << _output.amount;
+}
+
 bool
 check_and_adjust_path(string& in_path);
 
 
 boost::optional<JsonTx>
-construct_jsontx(string tx_hash);
+construct_jsontx(string tx_hash, string in_dir = {});
 
 }
 

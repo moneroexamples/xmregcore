@@ -238,12 +238,13 @@ check_and_adjust_path(string& in_path)
 }
 
 boost::optional<JsonTx>
-construct_jsontx(string tx_hash)
+construct_jsontx(string tx_hash, string in_dir)
 {
-    string tx_path  = "./tx/tx_" + tx_hash + ".json";
+    string tx_path  = in_dir + "./tx/tx_" + tx_hash + ".json";
 
     if (!check_and_adjust_path(tx_path))
     {
+        cerr << tx_path << " does not exist!\n";
         return {};
     }
 
