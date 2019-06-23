@@ -157,12 +157,23 @@ operator<<(std::ostream& os, JsonTx::account const& _account)
     return os << _account.address_str();
 }
 
-    inline std::ostream&
+inline std::ostream&
 operator<<(std::ostream& os, JsonTx::output const& _output)
 {
     return os << _output.index << ',' 
               << pod_to_hex(_output.pub_key) << ','
               << _output.amount;
+}
+
+inline std::ostream&
+operator<<(std::ostream& os, vector<JsonTx::output> const& _outputs)
+{
+    for (auto& output: _outputs)
+    {
+       os << output << '\n';
+    }
+
+    return os;
 }
 
 bool

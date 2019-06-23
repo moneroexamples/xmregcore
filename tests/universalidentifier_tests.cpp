@@ -177,7 +177,6 @@ TEST_P(ModularIdentifierTest, OutputsRingCT)
 }
 
 
-
 TEST_P(ModularIdentifierTest, OutputsRingCTCoinbaseTx)
 {
     string tx_hash_str = GetParam();
