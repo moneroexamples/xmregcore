@@ -291,7 +291,7 @@ TEST_P(ModularIdentifierTest, InputWithKnownOutputs)
     // first add real public keys
     for (auto&& input: jtx->sender.inputs)
     {
-        known_outputs[input.out_pub_key] = input.amount;
+        known_outputs.insert({input.out_pub_key, input.amount});
         expected_total += input.amount;
     }
 
@@ -301,7 +301,7 @@ TEST_P(ModularIdentifierTest, InputWithKnownOutputs)
     for (size_t i = 0; i < 20; ++i)
     {
          auto rand_pk = crypto::rand<public_key>();
-         known_outputs[rand_pk] = 4353534534; // some amount
+         known_outputs.insert({rand_pk, 4353534534}); // some amount
     }
 
     MockMicroCore mcore;
