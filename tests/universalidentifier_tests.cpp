@@ -317,13 +317,76 @@ TEST_P(ModularIdentifierTest, InputWithKnownOutputs)
 
     
     identifier.identify();
-
     
     ASSERT_TRUE(identifier.get<0>()->get()
                 == jtx->sender.inputs);
 
     ASSERT_EQ(identifier.get<0>()->get_total(),
               expected_total);
+}
+
+// in some rare cases, different txs have same output
+// public keys, but different amounts. so known_output map
+// is of type of unordered_mulitimap to allow for such a 
+// situation
+TEST_P(ModularIdentifierTest, InputWithKnownMultipleOutputs)
+{
+    string tx_hash_str = GetParam();
+
+    auto jtx = construct_jsontx(tx_hash_str);
+
+    ASSERT_TRUE(jtx);
+
+    // make vector of known outputs
+    
+    Input::known_outputs_t known_outputs;
+    uint64_t expected_total {};
+
+    // first add real public keys
+    for (auto&& input: jtx->sender.inputs)
+    {
+        known_outputs.insert({input.out_pub_key, input.amount});
+
+        // insert duplicate output with different amount
+        known_outputs.insert({input.out_pub_key, input.amount*2});
+
+        expected_total += input.amount;
+    }
+
+    // now add some random ones
+    
+    for (size_t i = 0; i < 20; ++i)
+    {
+         auto rand_pk = crypto::rand<public_key>();
+         known_outputs.insert({rand_pk, 4353534534}); // some amount
+    }
+
+    MockMicroCore mcore;
+
+    ADD_MOCKS(mcore);
+    
+    auto identifier = make_identifier(jtx->tx,
+          make_unique<Input>(
+                         &jtx->sender.address,
+                         &jtx->sender.viewkey,
+                         &known_outputs,
+                         &mcore));
+
+    
+    identifier.identify();
+
+    // we just expect to get two return vector of inputs
+    // twice the size of the actual inputs due to there being
+    // double outputs
+    
+    ASSERT_EQ(identifier.get<0>()->get().size(), 
+            jtx->sender.inputs.size()*2);
+    
+    // since second dupicate of each outputs has double
+    // amount, the expected total is 3 times greater
+    // than real amount
+    ASSERT_EQ(identifier.get<0>()->get_total(),
+              expected_total*3);
 }
 
 TEST_P(ModularIdentifierTest, GuessInputRingCT)
