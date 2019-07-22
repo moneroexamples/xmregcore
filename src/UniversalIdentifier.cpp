@@ -365,7 +365,7 @@ void Input::identify(transaction const& tx,
     if (!known_outputs)
         return;
 
-     auto search_misses {0};
+     //auto search_misses {0};
 
      auto input_no = tx.vin.size();
 
@@ -443,21 +443,21 @@ void Input::identify(transaction const& tx,
 
          } // for (const cryptonote::output_data_t& output_data: outputs)
 
-         if (found_a_match == false)
-         {
-             // if we didnt find any match, break of the look.
-             // there is no reason to check remaining key images
-             // as when we spent something, our outputs should be
-             // in all inputs in a given txs. Thus, if a single input
-             // is without our output, we can assume this tx does
-             // not contain any of our spendings.
+//         if (found_a_match == false)
+//         {
+//             // if we didnt find any match, break of the look.
+//             // there is no reason to check remaining key images
+//             // as when we spent something, our outputs should be
+//             // in all inputs in a given txs. Thus, if a single input
+//             // is without our output, we can assume this tx does
+//             // not contain any of our spendings.
 
-             // just to be sure before we break out of this loop,
-             // do it only after two misses
+//             // just to be sure before we break out of this loop,
+//             // do it only after two misses
 
-             if (++search_misses > 2)
-                 break;
-         }
+//            // if (++search_misses > 2)
+//               //  break;
+//         }
 
      } //  for (auto i = 0u; i < input_no; ++i)
 }
@@ -560,8 +560,7 @@ GuessInput::identify(transaction const& tx,
         // matches the given key image in the current tx
         for (auto const& txi : indices)
         {
-           auto const& mixin_tx_hash = txi.first;
-           auto const& output_index_in_tx = txi.second;
+           auto const& mixin_tx_hash = txi.first;          
 
            transaction mixin_tx;
 
@@ -633,8 +632,6 @@ void RealInput::identify(transaction const& tx,
                          public_key const& tx_pub_key,
                          vector<public_key> const& additional_tx_pub_keys)
 {
-     auto search_misses {0};
-
      auto input_no = tx.vin.size();
 
      for (auto i = 0u; i < input_no; ++i)
@@ -670,8 +667,7 @@ void RealInput::identify(transaction const& tx,
          // matches the given key image in the current tx
          for (auto const& txi : indices)
          {
-            auto const& mixin_tx_hash = txi.first;
-            auto const& output_index_in_tx = txi.second;
+            auto const& mixin_tx_hash = txi.first;         
 
             transaction mixin_tx;
 
