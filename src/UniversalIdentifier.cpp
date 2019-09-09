@@ -365,7 +365,7 @@ void Input::identify(transaction const& tx,
     if (!known_outputs)
         return;
 
-     auto search_misses {0};
+     //auto search_misses {0};
 
      auto input_no = tx.vin.size();
 
@@ -421,40 +421,43 @@ void Input::identify(transaction const& tx,
              // if the key exists. Its much faster than going to mysql
              // for this.
 
-             auto it = known_outputs->find(output_data.pubkey);
+             // since known_outputs is multimap, we can have multiple
+             // values (i.e. amounts) for a single key (i.e. output public
+             // key). Thus we are going to use equal_range to process
+             // all amounts associated with given public key.
+             auto it_pair = known_outputs->equal_range(output_data.pubkey);
 
-             if (it != known_outputs->end())
-             {
-                 // this seems to be our mixin.
-                 // save it into identified_inputs vector
+             for_each(it_pair.first, it_pair.second, 
+                     [this, &in_key, &found_a_match]
+                     (auto const& kv_pair)
+                     {
+                        this->identified_inputs.push_back(info {
+                             in_key.k_image,
+                             kv_pair.second, // amount
+                             kv_pair.first /*output .pubkey*/});
 
-                 identified_inputs.push_back(info {
-                         in_key.k_image,
-                         it->second, // amount
-                         output_data.pubkey});
-
-                 total_xmr += it->second;
-
-                 found_a_match = true;
-             }
+                         this->total_xmr += kv_pair.second;
+                 
+                         found_a_match = true;
+                     });
 
          } // for (const cryptonote::output_data_t& output_data: outputs)
 
-         if (found_a_match == false)
-         {
-             // if we didnt find any match, break of the look.
-             // there is no reason to check remaining key images
-             // as when we spent something, our outputs should be
-             // in all inputs in a given txs. Thus, if a single input
-             // is without our output, we can assume this tx does
-             // not contain any of our spendings.
+//         if (found_a_match == false)
+//         {
+//             // if we didnt find any match, break of the look.
+//             // there is no reason to check remaining key images
+//             // as when we spent something, our outputs should be
+//             // in all inputs in a given txs. Thus, if a single input
+//             // is without our output, we can assume this tx does
+//             // not contain any of our spendings.
 
-             // just to be sure before we break out of this loop,
-             // do it only after two misses
+//             // just to be sure before we break out of this loop,
+//             // do it only after two misses
 
-             if (++search_misses > 2)
-                 break;
-         }
+//            // if (++search_misses > 2)
+//               //  break;
+//         }
 
      } //  for (auto i = 0u; i < input_no; ++i)
 }
@@ -557,8 +560,7 @@ GuessInput::identify(transaction const& tx,
         // matches the given key image in the current tx
         for (auto const& txi : indices)
         {
-           auto const& mixin_tx_hash = txi.first;
-           auto const& output_index_in_tx = txi.second;
+           auto const& mixin_tx_hash = txi.first;          
 
            transaction mixin_tx;
 
@@ -630,8 +632,6 @@ void RealInput::identify(transaction const& tx,
                          public_key const& tx_pub_key,
                          vector<public_key> const& additional_tx_pub_keys)
 {
-     auto search_misses {0};
-
      auto input_no = tx.vin.size();
 
      for (auto i = 0u; i < input_no; ++i)
@@ -667,8 +667,7 @@ void RealInput::identify(transaction const& tx,
          // matches the given key image in the current tx
          for (auto const& txi : indices)
          {
-            auto const& mixin_tx_hash = txi.first;
-            auto const& output_index_in_tx = txi.second;
+            auto const& mixin_tx_hash = txi.first;         
 
             transaction mixin_tx;
 
