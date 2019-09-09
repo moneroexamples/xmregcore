@@ -48,6 +48,19 @@ set(MONERO_BUILD_DIR ${MONERO_SOURCE_DIR}/build/release/
         CACHE PATH "Path to the build directory for Monero")
 
 
+if (NOT EXISTS ${MONERO_BUILD_DIR})   
+    # try different location   
+    message(STATUS "Trying different folder for monero libraries")
+    set(MONERO_BUILD_DIR ${MONERO_SOURCE_DIR}/build/Linux/master/release/
+        CACHE PATH "Path to the build directory for Monero" FORCE)
+endif()
+
+
+if (NOT EXISTS ${MONERO_BUILD_DIR})   
+  message(FATAL_ERROR "Monero libraries not found in: ${MONERO_BUILD_DIR}")
+endif()
+
+
 set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "${MONERO_BUILD_DIR}"
         CACHE PATH "Add Monero directory for library searching")
 
