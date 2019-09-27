@@ -31,7 +31,7 @@
 #set(LIBS        common;blocks;cryptonote_basic;cryptonote_core;
 #		cryptonote_protocol;daemonizer;mnemonics;epee;lmdb;device;
 #                blockchain_db;ringct;wallet;cncrypto;easylogging;version;checkpoints;
-#                ringct_basic)
+#                ringct_basic;randomx;hardforks)
 
 
 if (NOT MONERO_DIR)
@@ -81,7 +81,9 @@ set(LIBS  cryptonote_core
           epee
           checkpoints
           version
-          cncrypto)
+          cncrypto
+          randomx
+          hardforks)
 
 set(Xmr_INCLUDE_DIRS "${CPP_MONERO_DIR}")
 
@@ -104,6 +106,7 @@ foreach (l ${LIBS})
                                       "/contrib/epee/src"
                                       "/external/easylogging++/"
                                       "/src/ringct/"
+                                      "/external/${l}"
 			NO_DEFAULT_PATH
 			)
 
