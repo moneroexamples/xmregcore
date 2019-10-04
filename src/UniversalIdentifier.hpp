@@ -130,8 +130,8 @@ protected:
 class Input : public BaseIdentifier
 {
 public:
-                                            //output_pubk, amount
-    using known_outputs_t = unordered_multimap<public_key, uint64_t>;
+                                         //output_pubk, amount
+    using known_outputs_t = unordered_map<public_key, uint64_t>;
 
     Input(address_parse_info const* _a,
            secret_key const* _viewkey,

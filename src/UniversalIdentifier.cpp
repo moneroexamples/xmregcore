@@ -420,26 +420,23 @@ void Input::identify(transaction const& tx,
              // before going to the mysql, check our known outputs cash
              // if the key exists. Its much faster than going to mysql
              // for this.
+             
+             auto it = known_outputs->find(output_data.pubkey);
 
-             // since known_outputs is multimap, we can have multiple
-             // values (i.e. amounts) for a single key (i.e. output public
-             // key). Thus we are going to use equal_range to process
-             // all amounts associated with given public key.
-             auto it_pair = known_outputs->equal_range(output_data.pubkey);
+             if (it != known_outputs->end())
+             {
+                 // this seems to be our mixin.
+                 // save it into identified_inputs vector
 
-             for_each(it_pair.first, it_pair.second, 
-                     [this, &in_key, &found_a_match]
-                     (auto const& kv_pair)
-                     {
-                        this->identified_inputs.push_back(info {
-                             in_key.k_image,
-                             kv_pair.second, // amount
-                             kv_pair.first /*output .pubkey*/});
+                 identified_inputs.push_back(info {
+                         in_key.k_image,
+                         it->second, // amount
+                         output_data.pubkey});
 
-                         this->total_xmr += kv_pair.second;
-                 
-                         found_a_match = true;
-                     });
+                 total_xmr += it->second;
+
+                 found_a_match = true;
+             }  
 
          } // for (const cryptonote::output_data_t& output_data: outputs)
 
