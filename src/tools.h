@@ -79,4 +79,8 @@ nettype_based_on_address(string const& address);
 boost::optional<subaddress_index>
 parse_subaddress_index(string idx_str);
 
+
+string
+remove_trailing_path_separator(const string& in_path);
+
 }
