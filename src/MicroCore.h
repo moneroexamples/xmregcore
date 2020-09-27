@@ -148,6 +148,9 @@ public:
             std::vector<tx_info>& tx_infos,
             std::vector<spent_key_image_info>& key_image_infos) const;
 
+    virtual bool
+    get_mempool_txs(std::vector<transaction>& txs) const;
+
     virtual uint64_t
     get_current_blockchain_height() const;
 

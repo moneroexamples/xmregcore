@@ -198,10 +198,26 @@ MicroCore::get_mempool_txs(
         std::vector<tx_info>& tx_infos,
         std::vector<spent_key_image_info>& key_image_infos) const
 {
+
     return m_mempool.get_transactions_and_spent_keys_info(
                 tx_infos, key_image_infos, true);
 }
 
+bool
+MicroCore::get_mempool_txs(
+        std::vector<transaction>& txs) const
+{
+  try
+  {
+      m_mempool.get_transactions(txs);
+      return true;
+  }
+  catch (std::exception const& e)
+  {
+      std::cerr << e.what() << std::endl;
+      return false;
+  }
+}
 
 uint64_t
 MicroCore::get_current_blockchain_height() const
