@@ -28,11 +28,6 @@
 # (c) 2014-2016 cpp-ethereum contributors.
 #------------------------------------------------------------------------------
 
-#set(LIBS        common;blocks;cryptonote_basic;cryptonote_core;
-#		cryptonote_protocol;daemonizer;mnemonics;epee;lmdb;device;
-#                blockchain_db;ringct;wallet;cncrypto;easylogging;version;checkpoints;
-#                ringct_basic;randomx;hardforks)
-
 
 if (NOT MONERO_DIR)
     set(MONERO_DIR ~/monero)
@@ -48,8 +43,8 @@ set(MONERO_BUILD_DIR ${MONERO_SOURCE_DIR}/build/release/
         CACHE PATH "Path to the build directory for Monero")
 
 
-if (NOT EXISTS ${MONERO_BUILD_DIR})   
-    # try different location   
+if (NOT EXISTS ${MONERO_BUILD_DIR})
+    # try different location
     message(STATUS "Trying different folder for monero libraries")
     set(MONERO_BUILD_DIR ${MONERO_SOURCE_DIR}/build/Linux/master/release/
         CACHE PATH "Path to the build directory for Monero" FORCE)
@@ -59,6 +54,8 @@ endif()
 if (NOT EXISTS ${MONERO_BUILD_DIR})   
   message(FATAL_ERROR "Monero libraries not found in: ${MONERO_BUILD_DIR}")
 endif()
+
+MESSAGE(STATUS "Looking for libunbound") # FindUnbound.cmake from monero repo
 
 
 set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "${MONERO_BUILD_DIR}"
@@ -72,6 +69,7 @@ set(LIBS  cryptonote_core
           #daemonizer
           blocks
           lmdb
+          wallet-crypto
           ringct
           ringct_basic
           common
@@ -83,7 +81,8 @@ set(LIBS  cryptonote_core
           version
           cncrypto
           randomx
-          hardforks)
+          hardforks
+          miniupnpc)
 
 set(Xmr_INCLUDE_DIRS "${CPP_MONERO_DIR}")
 
@@ -102,11 +101,14 @@ foreach (l ${LIBS})
                         PATH_SUFFIXES "/src/${l}"
                                       "/src/"
                                       "/external/db_drivers/lib${l}"
-                                      "/lib" "/src/crypto"
+                                      "/lib"
+                                      "/src/crypto"
+                                      "/src/crypto/wallet"
                                       "/contrib/epee/src"
                                       "/external/easylogging++/"
                                       "/src/ringct/"
                                       "/external/${l}"
+                                      "external/miniupnp/miniupnpc"
 			NO_DEFAULT_PATH
 			)
 
@@ -120,6 +122,36 @@ foreach (l ${LIBS})
     set(Monero_LIBRARIES ${Monero_LIBRARIES} ${l} CACHE INTERNAL "Monero LIBRARIES")
 
 endforeach()
+
+
+FIND_PATH(UNBOUND_INCLUDE_DIR
+  NAMES unbound.h
+  PATH_SUFFIXES include/ include/unbound/
+  PATHS "${PROJECT_SOURCE_DIR}"
+  ${UNBOUND_ROOT}
+  $ENV{UNBOUND_ROOT}
+  /usr/local/
+  /usr/
+)
+
+find_library (UNBOUND_LIBRARY unbound)
+if (WIN32 OR (${UNBOUND_LIBRARY} STREQUAL "UNBOUND_LIBRARY-NOTFOUND"))
+    add_library(unbound STATIC IMPORTED)
+    set_property(TARGET unbound PROPERTY IMPORTED_LOCATION ${MONERO_BUILD_DIR}/external/unbound/libunbound.a)
+endif()
+
+message("Xmr_WALLET-CRYPTO_LIBRARIES ${Xmr_WALLET-CRYPTO_LIBRARIES}")
+
+if("${Xmr_WALLET-CRYPTO_LIBRARIES}" STREQUAL "Xmr_WALLET-CRYPTO_LIBRARY-NOTFOUND")
+  set(WALLET_CRYPTO "")
+else()
+  set(WALLET_CRYPTO ${Xmr_WALLET-CRYPTO_LIBRARIES})
+endif()
+
+
+
+message("WALLET_CRYPTO ${WALLET_CRYPTO}")
+
 
 
 message("FOUND Monero_LIBRARIES: ${Monero_LIBRARIES}")
@@ -153,8 +185,8 @@ add_library(Monero::Monero INTERFACE IMPORTED GLOBAL)
 
 set_target_properties(Monero::Monero PROPERTIES
       INTERFACE_INCLUDE_DIRECTORIES 
-            "${MONERO_SOURCE_DIR}/src;${MONERO_SOURCE_DIR}/external;${MONERO_SOURCE_DIR}/build;${MONERO_SOURCE_DIR}/external/easylogging++;${MONERO_SOURCE_DIR}/contrib/epee/include;${MONERO_SOURCE_DIR}/external/db_drivers/liblmdb")
+            "${MONERO_SOURCE_DIR}/src;${MONERO_SOURCE_DIR}/external;${MONERO_SOURCE_DIR}/src/crypto;${MONERO_SOURCE_DIR}/src/crypto/wallet;${MONERO_SOURCE_DIR}/build;${MONERO_SOURCE_DIR}/external/easylogging++;${MONERO_SOURCE_DIR}/contrib/epee/include;${MONERO_SOURCE_DIR}/external/db_drivers/liblmdb;${MONERO_BUILD_DIR}/generated_include/crypto/wallet")
 
 
 target_link_libraries(Monero::Monero INTERFACE
-    ${Monero_LIBRARIES})
+    ${Monero_LIBRARIES} ${WALLET_CRYPTO})

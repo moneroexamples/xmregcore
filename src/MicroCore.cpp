@@ -199,7 +199,7 @@ MicroCore::get_mempool_txs(
         std::vector<spent_key_image_info>& key_image_infos) const
 {
     return m_mempool.get_transactions_and_spent_keys_info(
-                tx_infos, key_image_infos);
+                tx_infos, key_image_infos, true);
 }
 
 
