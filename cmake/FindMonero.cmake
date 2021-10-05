@@ -66,6 +66,7 @@ set(LIBS  cryptonote_core
           blockchain_db
           #cryptonote_protocol
           cryptonote_basic
+          cryptonote_format_utils_basic
           #daemonizer
           blocks
           lmdb
@@ -104,6 +105,7 @@ foreach (l ${LIBS})
                                       "/lib"
                                       "/src/crypto"
                                       "/src/crypto/wallet"
+                                      "/src/cryptonote_basic"
                                       "/contrib/epee/src"
                                       "/external/easylogging++/"
                                       "/src/ringct/"
