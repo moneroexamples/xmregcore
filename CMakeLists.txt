@@ -28,10 +28,10 @@ target_include_directories(myxrmcore
 target_link_libraries(${PROJECT_NAME}
     PRIVATE XMREG::core)
 
-if (BUILD_XMREGCORE_TESTS)
-    enable_testing()
-    add_subdirectory(ext/googletest)
-    add_subdirectory(tests)
-endif()
+#if (BUILD_XMREGCORE_TESTS)
+#    enable_testing()
+#    add_subdirectory(ext/googletest)
+#    add_subdirectory(tests)
+#endif()
 
 
