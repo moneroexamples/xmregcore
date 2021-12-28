@@ -62,28 +62,29 @@ set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "${MONERO_BUILD_DIR}"
         CACHE PATH "Add Monero directory for library searching")
 
 
-set(LIBS  cryptonote_core
-          blockchain_db
-          #cryptonote_protocol
-          cryptonote_basic
-          cryptonote_format_utils_basic
-          #daemonizer
-          blocks
-          lmdb
-          wallet-crypto
-          ringct
-          ringct_basic
-          common
-          #mnemonics
-          easylogging
-          device
-          epee
-          checkpoints
-          version
-          cncrypto
-          randomx
-          hardforks
-          miniupnpc)
+set(LIBS  blockchain_db
+    wallet
+    device
+    wallet-crypto
+    ${WALLET_CRYPTO}
+    cryptonote_core
+    cryptonote_basic
+    cryptonote_format_utils_basic
+    cryptonote_protocol
+    #daemonizer
+    blocks
+    lmdb
+    ringct
+    ringct_basic
+    common
+    cncrypto
+    #mnemonics
+    easylogging
+    epee
+    checkpoints
+    version
+    randomx
+    hardforks)
 
 set(Xmr_INCLUDE_DIRS "${CPP_MONERO_DIR}")
 
@@ -99,18 +100,21 @@ foreach (l ${LIBS})
 	find_library(Xmr_${L}_LIBRARY
 			NAMES ${l}
 			PATHS ${CMAKE_LIBRARY_PATH}
-                        PATH_SUFFIXES "/src/${l}"
-                                      "/src/"
-                                      "/external/db_drivers/lib${l}"
-                                      "/lib"
-                                      "/src/crypto"
-                                      "/src/crypto/wallet"
-                                      "/src/cryptonote_basic"
-                                      "/contrib/epee/src"
-                                      "/external/easylogging++/"
-                                      "/src/ringct/"
-                                      "/external/${l}"
-                                      "external/miniupnp/miniupnpc"
+                        PATH_SUFFIXES  "/src/${l}"
+                                        "/src/"
+                                        "/external/db_drivers/lib${l}"
+                                        "/lib"
+                                        "/src/crypto"
+                                        "/contrib/epee/src"
+                                        "/external/easylogging++/"
+                                        "/src/crypto/wallet"
+                                        "/contrib/epee/src"
+                                        "/src/crypto/wallet"
+                                        "/src/cryptonote_basic"
+                                        "/external/easylogging++/"
+                                        "external/miniupnp/miniupnpc"
+                                        "/src/ringct/"
+                                        "/external/${l}"
 			NO_DEFAULT_PATH
 			)
 
