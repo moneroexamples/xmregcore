@@ -142,8 +142,8 @@ Output::identify(transaction const& tx,
         // outputs
         std::unique_ptr<subaddress_index> subaddr_idx;
 
-        boost::optional<crypto::view_tag> out_vt;
-        out_vt = cryptonote::get_output_view_tag(tx.vout[i]);
+        boost::optional<crypto::view_tag> vt;
+        vt = cryptonote::get_output_view_tag(tx.vout[i]);
 
         // since view tags were added, we check the
         // output's view tag against the derived view tag.
@@ -152,15 +152,10 @@ Output::identify(transaction const& tx,
         // matches one of ours. If no view tag match,
         // we know the output isn't ours and can skip
         // the expensive subaddress spend key derivation.
-        bool output_can_be_mine = true;
-        if (out_vt)
-        {
-            crypto::view_tag vt;
-            crypto::derive_view_tag(derivation, i, vt);
-            output_can_be_mine = *out_vt == vt;
-        }
+        bool out_can_be_mine = cryptonote::out_can_be_to_acc(
+                                            vt, derivation, i);
 
-        if (output_can_be_mine)
+        if (out_can_be_mine)
         {
             hwdev.derive_subaddress_public_key(
                         out_pub_key, derivation, i,
@@ -175,7 +170,7 @@ Output::identify(transaction const& tx,
 
 	    bool mine_output {false};
 
-        if (output_can_be_mine)
+        if (out_can_be_mine)
         {
             if (!pacc)
             {
@@ -204,15 +199,11 @@ Output::identify(transaction const& tx,
 
         if (!mine_output && !additional_tx_pub_keys.empty())
         {
-            if (out_vt)
-            {
-                // check view tag using additional tx public keys
-                crypto::view_tag vt;
-                crypto::derive_view_tag(additional_derivations[i], i, vt);
-                output_can_be_mine = *out_vt == vt;
-            }
+            // check view tag using additional tx public keys
+            out_can_be_mine = cryptonote::out_can_be_to_acc(
+                                            vt, additional_derivations[i], i);
 
-            if (output_can_be_mine)
+            if (out_can_be_mine)
             {
                 // check for output using additional tx public keys
                 hwdev.derive_subaddress_public_key(
