@@ -119,12 +119,9 @@ Output::identify(transaction const& tx,
     {
         // i will act as output indxes in the tx
 
-        if (tx.vout[i].target.type() != typeid(txout_to_key))
+        public_key out_pub_key;
+        if (!cryptonote::get_output_public_key(tx.vout[i], out_pub_key))
             continue;
-
-        // get tx input key
-        txout_to_key const& txout_key
-                = boost::get<txout_to_key>(tx.vout[i].target);
 
         uint64_t amount = tx.vout[i].amount;
 
@@ -145,9 +142,25 @@ Output::identify(transaction const& tx,
         // outputs
         std::unique_ptr<subaddress_index> subaddr_idx;
 
-        hwdev.derive_subaddress_public_key(
-					txout_key.key, derivation, i, 
-					subaddress_spendkey);
+        boost::optional<crypto::view_tag> vt;
+        vt = cryptonote::get_output_view_tag(tx.vout[i]);
+
+        // since view tags were added, we check the
+        // output's view tag against the derived view tag.
+        // If they match, we continue with deriving
+        // the subaddress spend key and checking if it
+        // matches one of ours. If no view tag match,
+        // we know the output isn't ours and can skip
+        // the expensive subaddress spend key derivation.
+        bool out_can_be_mine = cryptonote::out_can_be_to_acc(
+                                            vt, derivation, i);
+
+        if (out_can_be_mine)
+        {
+            hwdev.derive_subaddress_public_key(
+                        out_pub_key, derivation, i,
+                        subaddress_spendkey);
+        }
 
         // this derivation is going to be saved 
         // it can be one of addiitnal derivations
@@ -157,48 +170,58 @@ Output::identify(transaction const& tx,
 
 	    bool mine_output {false};
 
-        if (!pacc)
+        if (out_can_be_mine)
         {
-            // if pacc is not given, we check generated 
-            // subaddress_spendkey against the spendkey 
-            // of the address for which the Output identifier
-            // was instantiated
-    	    mine_output = (pub_spend_key == subaddress_spendkey);
-        }
-        else
-        {
-            // if pacc is given, we are going to use its 
-            // subaddress unordered map to check if generated
-            // subaddress_spendkey is one of its keys. this is 
-            // because the map can contain spendkeys of subaddreses
-            // assiciated with primary address. primary address's
-            // spendkey will be one of the keys as a special case
-            
-            subaddr_idx = pacc->has_subaddress(subaddress_spendkey); 
+            if (!pacc)
+            {
+                // if pacc is not given, we check generated
+                // subaddress_spendkey against the spendkey
+                // of the address for which the Output identifier
+                // was instantiated
+                mine_output = (pub_spend_key == subaddress_spendkey);
+            }
+            else
+            {
+                // if pacc is given, we are going to use its
+                // subaddress unordered map to check if generated
+                // subaddress_spendkey is one of its keys. this is
+                // because the map can contain spendkeys of subaddreses
+                // assiciated with primary address. primary address's
+                // spendkey will be one of the keys as a special case
 
-            mine_output = bool {subaddr_idx};
+                subaddr_idx = pacc->has_subaddress(subaddress_spendkey);
+
+                mine_output = bool {subaddr_idx};
+            }
         }
 
         auto with_additional = false;
 
         if (!mine_output && !additional_tx_pub_keys.empty())
         {
-            // check for output using additional tx public keys
-	    	hwdev.derive_subaddress_public_key(
-						txout_key.key, additional_derivations[i], 
-						i, 
-						subaddress_spendkey);
-	    
-            // do same comparison as above depending of the 
-            // avaliabity of the PrimaryAddress Account 
-            if (!pacc)
+            // check view tag using additional tx public keys
+            out_can_be_mine = cryptonote::out_can_be_to_acc(
+                                            vt, additional_derivations[i], i);
+
+            if (out_can_be_mine)
             {
-                mine_output = (pub_spend_key == subaddress_spendkey);
-            }
-            else
-            {
-                subaddr_idx = pacc->has_subaddress(subaddress_spendkey); 
-                mine_output = bool {subaddr_idx};
+                // check for output using additional tx public keys
+                hwdev.derive_subaddress_public_key(
+                            out_pub_key, additional_derivations[i],
+                            i,
+                            subaddress_spendkey);
+
+                // do same comparison as above depending of the
+                // avaliabity of the PrimaryAddress Account
+                if (!pacc)
+                {
+                    mine_output = (pub_spend_key == subaddress_spendkey);
+                }
+                else
+                {
+                    subaddr_idx = pacc->has_subaddress(subaddress_spendkey);
+                    mine_output = bool {subaddr_idx};
+                }
             }
 
             with_additional = true;
@@ -268,7 +291,7 @@ Output::identify(transaction const& tx,
 
             identified_outputs.emplace_back(
                     info{
-                        txout_key.key, amount, i, 
+                        out_pub_key, amount, i,
                         derivation_to_save,
                         rtc_outpk, rtc_mask, rtc_amount,
                         subaddress_spendkey
@@ -329,6 +352,7 @@ Output::decode_ringct(rct::rctSig const& rv,
             case rct::RCTTypeBulletproof:
             case rct::RCTTypeBulletproof2:
             case rct::RCTTypeCLSAG:    
+            case rct::RCTTypeBulletproofPlus:
                 amount = rct::decodeRctSimple(rv,
                                               rct::sk2rct(scalar1),
                                               i,
